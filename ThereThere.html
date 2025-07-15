@@ -1,0 +1,4030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThereThere: Enhanced Touch Theremin</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Favicon (placeholder) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎵</text></svg>">
+    <!-- Theme Color for PWA -->
+    <meta name="theme-color" content="#667eea">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-theremin-app-url.com/">
+    <meta property="og:title" content="ThereThere: Enhanced Touch Theremin">
+    <meta property="og:description" content="A responsive, multi-touch theremin with effects, recording, and playback.">
+    <meta property="og:image" content="https://placehold.co/1200x630/667eea/ffffff?text=ThereThere%20Theremin">
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://your-theremin-app-url.com/">
+    <meta property="twitter:title" content="ThereThere: Enhanced Touch Theremin">
+    <meta property="twitter:description" content="A responsive, multi-touch theremin with effects, recording, and playback.">
+    <meta property="twitter:image" content="https://placehold.co/1200x675/667eea/ffffff?text=ThereThere%20Theremin">
+
+    <style>
+        /* CSS Custom Properties (Variables) */
+        :root {
+            --primary-gradient-start: #667eea;
+            --primary-gradient-end: #764ba2;
+            --text-color: white;
+            --control-bg: rgba(255, 255, 255, 0.1);
+            --control-border: rgba(255, 255, 255, 0.2);
+            --button-hover-bg: rgba(255, 255, 255, 0.35);
+            --active-green-start: #4CAF50;
+            --active-green-end: #8BC34A;
+            --recording-red-start: #F44336;
+            --recording-red-end: #FF5722;
+            --playback-blue-start: #2196F3;
+            --playback-blue-end: #03A9F4;
+            --info-panel-bg: rgba(0, 0, 0, 0.75);
+            --blur-amount: 10px;
+            --border-radius-sm: 6px;
+            --border-radius-md: 15px;
+            --border-radius-lg: 20px;
+            --transition-speed: 0.3s ease;
+            --touch-indicator-color-base: rgba(255, 255, 255, 0.8);
+            --touch-indicator-glow-base: rgba(255, 255, 255, 0.6);
+            --touch-indicator-color-echo: rgba(100, 200, 255, 0.8); /* Renamed from dripping */
+            --touch-indicator-glow-echo: rgba(100, 200, 255, 0.7); /* Renamed from dripping */
+            --touch-indicator-color-reverb: rgba(255, 200, 100, 0.8); /* Renamed from lifting */
+            --touch-indicator-glow-reverb: rgba(255, 200, 100, 0.7); /* Renamed from lifting */
+        }
+
+        /* Global Reset and User Select Prevention */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;          /* Prevent text selection */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter for a modern look */
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%); /* Vibrant gradient background */
+            height: 100vh;
+            overflow: hidden; /* Prevent scrolling */
+            display: flex;
+            flex-direction: column;
+            color: var(--text-color); /* Default text color */
+        }
+
+        /* Header Styling */
+        .header {
+            background: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+            padding: 12px;
+            text-align: center;
+            backdrop-filter: blur(var(--blur-amount)); /* Frosted glass effect */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
+            z-index: 10; /* Ensure header is on top */
+        }
+
+        .header h1 {
+            font-size: 1.8em; /* Slightly larger heading */
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6); /* Deeper shadow */
+            color: #e0e0e0; /* Off-white for better contrast */
+        }
+
+        /* Controls Container */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px; /* Reduced gap for better fit */
+            margin-top: 8px;
+            flex-wrap: wrap; /* Allow controls to wrap on smaller screens */
+            padding: 0 10px; /* Add some padding on sides */
+        }
+
+        /* Individual Control Group Styling */
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px; /* Slightly reduced gap within groups */
+            background: var(--control-bg);
+            padding: 6px 12px;
+            border-radius: var(--border-radius-lg); /* More rounded corners */
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--control-border);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+        }
+
+        .control-group label {
+            font-size: 0.8em;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap; /* Prevent label text from wrapping */
+            font-weight: 500; /* Slightly bolder */
+        }
+
+        /* Input Field Styling */
+        .control-group input[type="number"],
+        .control-group input[type="range"] {
+            padding: 4px 8px; /* Slightly more padding */
+            border: none;
+            border-radius: var(--border-radius-md);
+            background: rgba(255, 255, 255, 0.25); /* Slightly less transparent */
+            color: var(--text-color);
+            backdrop-filter: blur(5px);
+            appearance: none; /* Remove default browser styling for range/number inputs */
+            -webkit-appearance: none;
+            outline: none; /* Remove focus outline */
+            transition: background var(--transition-speed);
+        }
+
+        .control-group input[type="number"]:focus,
+        .control-group input[type="range"]:focus {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Range Slider Thumb Styling */
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; /* Larger thumb */
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+            margin-top: -3px; /* Adjust vertical position */
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-group input[type="number"] {
+            width: 60px; /* Fixed width for number inputs */
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .control-group input[type="range"] {
+            width: 80px; /* Fixed width for range inputs */
+        }
+
+        /* Button Styling (Wave, Effect, Record, Start/Stop) */
+        .wave-btn, .effect-btn, .record-btn, #startStop, #resetSettings {
+            padding: 6px 14px;
+            border: none;
+            border-radius: var(--border-radius-lg);
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all var(--transition-speed);
+            white-space: nowrap;
+            font-weight: bold;
+            font-size: 0.85em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            min-width: 80px; /* Ensure minimum touch target size */
+            min-height: 32px; /* Ensure minimum touch target size */
+        }
+
+        .wave-btn:hover, .effect-btn:hover, .record-btn:hover, #startStop:hover, #resetSettings:hover {
+            background: var(--button-hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Active Button States */
+        .wave-btn.active, .effect-btn.active {
+            background: linear-gradient(45deg, var(--active-green-start) 0%, var(--active-green-end) 100%); /* Green gradient for active */
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        }
+
+        .record-btn.recording {
+            background: linear-gradient(45deg, var(--recording-red-start) 0%, var(--recording-red-end) 100%); /* Red gradient for recording */
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+            animation: pulse 1s ease-in-out infinite alternate; /* Pulsing animation */
+        }
+
+        .record-btn.playing { /* New class for playback active state */
+            background: linear-gradient(45deg, var(--playback-blue-start) 0%, var(--playback-blue-end) 100%); /* Blue gradient for playing */
+            box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+        }
+
+        .record-btn.has-recording {
+            background: linear-gradient(45deg, var(--playback-blue-start) 0%, var(--playback-blue-end) 100%); /* Blue gradient when a recording exists */
+            box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+
+        #startStop.active {
+            background: linear-gradient(45deg, var(--recording-red-start) 0%, var(--recording-red-end) 100%); /* Red gradient for active (stopping) */
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+        }
+
+        /* Theremin Play Area */
+        .theremin-area {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            margin: 15px;
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            cursor: crosshair;
+            backdrop-filter: blur(5px);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3), 0 5px 25px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Touch Indicator */
+        .touch-indicator {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--touch-indicator-color-base) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s ease, transform 0.05s linear, background 0.1s ease, box-shadow 0.1s ease;
+            box-shadow: 0 0 30px var(--touch-indicator-glow-base);
+            z-index: 5;
+        }
+
+        /* Melody Path SVG */
+        .melody-path {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allow interaction with theremin area beneath */
+            z-index: 2; /* Below touch indicator */
+        }
+
+        /* Info Panel and Instructions */
+        .info-panel, .instructions {
+            position: absolute;
+            background: var(--info-panel-bg);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: var(--border-radius-md);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 6;
+            font-size: 0.9em;
+            transition: height var(--transition-speed), padding var(--transition-speed); /* Smooth collapse */
+            overflow: hidden; /* Hide content when collapsed */
+        }
+
+        .info-panel {
+            top: 15px;
+            left: 15px;
+            min-width: 160px;
+        }
+
+        .frequency-display, .volume-display, .pressure-display, .unison-display, .effect-display, .record-display {
+            font-weight: bold;
+            margin-bottom: 4px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .instructions {
+            bottom: 15px;
+            right: 15px;
+            max-width: 280px;
+            line-height: 1.3;
+        }
+
+        .instructions strong {
+            color: #aaffaa;
+        }
+
+        .instructions .privacy-note {
+            font-size: 0.75em;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* Wave Visualizer Area */
+        .wave-visual {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 4;
+        }
+
+        .wave-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Recording Controls Panel */
+        .recording-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 6;
+        }
+
+        /* Saved Melodies List */
+        .melody-list {
+            position: absolute;
+            bottom: 100px; /* Position above wave visualizer */
+            right: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: var(--border-radius-md);
+            padding: 10px;
+            max-width: 200px;
+            max-height: 150px;
+            overflow-y: auto; /* Scroll if too many melodies */
+            z-index: 6;
+            backdrop-filter: blur(var(--blur-amount));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .melody-list .list-header {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-weight: bold;
+        }
+
+        .melody-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Distribute content */
+            gap: 8px;
+            padding: 6px;
+            margin: 2px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .melody-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .melody-item button {
+            padding: 3px 8px;
+            font-size: 0.7em;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background 0.2s ease;
+            min-width: 40px; /* Smaller for list buttons */
+            min-height: 24px;
+        }
+
+        .melody-item button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* File Input Styling */
+        .file-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .file-input-group input[type="file"] {
+            display: none; /* Hide default file input */
+        }
+
+        .file-input-group label.file-button {
+            padding: 6px 14px;
+            border-radius: var(--border-radius-lg);
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all var(--transition-speed);
+            white-space: nowrap;
+            font-weight: bold;
+            font-size: 0.85em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            min-width: 80px; /* Ensure minimum touch target size */
+            min-height: 32px; /* Ensure minimum touch target size */
+        }
+
+        .file-input-group label.file-button:hover {
+            background: var(--button-hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+        }
+
+
+        /* Message Box for Alerts */
+        #messageBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: var(--text-color);
+            padding: 20px 30px;
+            border-radius: var(--border-radius-md);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-speed), visibility var(--transition-speed);
+            text-align: center;
+            max-width: 80%;
+        }
+
+        #messageBox.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Audio Status Indicator */
+        #audioStatus {
+            position: absolute;
+            top: 15px;
+            right: 250px; /* Adjust based on recording controls width */
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: var(--border-radius-md);
+            font-size: 0.8em;
+            font-weight: bold;
+            z-index: 7;
+            transition: background var(--transition-speed);
+        }
+
+        #audioStatus.status-inactive {
+            background: linear-gradient(45deg, #D32F2F 0%, #FF5252 100%); /* Red */
+        }
+
+        #audioStatus.status-suspended {
+            background: linear-gradient(45deg, #FFC107 0%, #FFEB3B 100%); /* Yellow */
+            color: #333;
+        }
+
+        #audioStatus.status-active {
+            background: linear-gradient(45deg, #388E3C 0%, #4CAF50 100%); /* Green */
+        }
+
+        /* Panel Toggle Button */
+        .panel-toggle-btn {
+            position: absolute;
+            top: 5px; /* Adjust as needed */
+            right: 5px; /* Adjust as needed */
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 1.2em;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1; /* For better icon centering */
+            transition: background 0.2s ease;
+            z-index: 7; /* Above panel content */
+            min-width: unset; /* Override general button min-width */
+            min-height: unset;
+        }
+
+        .panel-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Collapsed Panel Styles */
+        .info-panel.collapsed {
+            height: 35px; /* Height when collapsed, just showing header/button */
+            padding-bottom: 0;
+        }
+
+        .instructions.collapsed {
+            height: 35px; /* Height when collapsed */
+            padding-bottom: 0;
+        }
+
+        /* Hide content when collapsed */
+        .info-panel.collapsed > *:not(.panel-toggle-btn) {
+            display: none;
+        }
+        .instructions.collapsed > *:not(.panel-toggle-btn) {
+            display: none;
+        }
+
+        /* New Effect Controls Styling */
+        .effect-controls-panel {
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 12px;
+            border-radius: var(--border-radius-md);
+            backdrop-filter: blur(var(--blur-amount));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 6;
+            font-size: 0.85em;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 250px; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling for many effects */
+        }
+
+        .effect-param-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .effect-param-group:last-child {
+            border-bottom: none;
+        }
+
+        .effect-param-group label {
+            min-width: 60px; /* Align labels */
+            font-size: 0.8em;
+            white-space: nowrap;
+        }
+
+        .effect-param-group input[type="range"] {
+            flex-grow: 1;
+            width: auto; /* Allow to fill space */
+        }
+
+        .effect-param-group span {
+            min-width: 35px; /* Align display values */
+            text-align: right;
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5em; }
+            .controls { gap: 6px; flex-direction: column; padding: 0 6px; }
+            .control-group { flex-direction: row; justify-content: space-between; width: 100%; padding: 6px 8px; }
+            .control-group label { font-size: 0.75em; }
+            .control-group input[type="number"] { width: 50px; }
+            .control-group input[type="range"] { width: 60px; }
+            .info-panel, .instructions { font-size: 0.75em; padding: 8px; }
+            .theremin-area { margin: 8px; }
+            .recording-controls { top: 10px; right: 10px; }
+            .melody-list { bottom: 80px; right: 10px; max-width: 150px; }
+            #audioStatus {
+                top: 80px; /* Adjust position for smaller screens */
+                right: 10px;
+                left: 10px;
+                text-align: center;
+            }
+            .effect-controls-panel {
+                max-height: 150px; /* Adjust for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎵 ThereThere: Enhanced Touch Theremin 🎵</h1>
+        <div class="controls">
+            <div class="control-group">
+                <label>Wave:</label>
+                <button id="sineWave" class="wave-btn active" aria-label="Sine Waveform" aria-pressed="true">Sine</button>
+                <button id="squareWave" class="wave-btn" aria-label="Square Waveform" aria-pressed="false">Square</button>
+                <button id="sawWave" class="wave-btn" aria-label="Sawtooth Waveform" aria-pressed="false">Saw</button>
+                <button id="triangleWave" class="wave-btn" aria-label="Triangle Waveform" aria-pressed="false">Triangle</button>
+            </div>
+            <div class="control-group">
+                <label>Effects:</label>
+                <button id="echoToggle" class="effect-btn" aria-label="Toggle Echo Effect" aria-pressed="false">Echo</button>
+                <button id="reverbToggle" class="effect-btn" aria-label="Toggle Reverb Effect" aria-pressed="false">Reverb</button>
+                <button id="chorusToggle" class="effect-btn" aria-label="Toggle Chorus Effect" aria-pressed="false">Chorus</button>
+                <button id="flangerToggle" class="effect-btn" aria-label="Toggle Flanger Effect" aria-pressed="false">Flanger</button>
+                <button id="phaserToggle" class="effect-btn" aria-label="Toggle Phaser Effect" aria-pressed="false">Phaser</button>
+                <button id="distortionToggle" class="effect-btn" aria-label="Toggle Distortion Effect" aria-pressed="false">Distortion</button>
+                <button id="bitCrusherToggle" class="effect-btn" aria-label="Toggle Bit Crusher Effect" aria-pressed="false">Bit Crush</button>
+            </div>
+            <div class="control-group">
+                <button id="startStop" aria-label="Start or Stop Audio" aria-pressed="false">Start Audio</button>
+            </div>
+            <div class="control-group">
+                <label for="effectMix">Mix:</label>
+                <input type="range" id="effectMix" min="0" max="100" value="50" aria-label="Effect Mix">
+                <span id="mixDisplay">50%</span>
+            </div>
+            <div class="control-group">
+                <label for="minFreq">Min:</label>
+                <input type="number" id="minFreq" value="200" min="50" max="500" aria-label="Minimum Frequency">
+            </div>
+            <div class="control-group">
+                <label for="maxFreq">Max:</label>
+                <input type="number" id="maxFreq" value="1000" min="500" max="2000" aria-label="Maximum Frequency">
+            </div>
+            <div class="control-group">
+                <label for="unisonCount">Voices:</label>
+                <input type="range" id="unisonCount" min="1" max="8" value="1" aria-label="Number of Unison Voices">
+                <span id="unisonDisplay">1</span>
+            </div>
+            <div class="control-group">
+                <label for="unisonSpread">Spread:</label>
+                <input type="range" id="unisonSpread" min="0" max="10" value="2" aria-label="Unison Spread Amount">
+                <span id="spreadDisplay">2%</span>
+            </div>
+            <div class="control-group">
+                <button id="resetSettings" aria-label="Reset All Settings to Default">Reset All</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="theremin-area" id="thereminArea">
+        <svg class="melody-path" id="melodyPath"></svg>
+        <div class="touch-indicator" id="touchIndicator"></div>
+        
+        <div class="info-panel" id="infoPanel">
+            <button class="panel-toggle-btn" aria-label="Collapse Info Panel">_</button>
+            <div class="frequency-display" id="freqDisplay">Frequency: 0 Hz</div>
+            <div class="volume-display" id="volumeDisplay">Volume: 0%</div>
+            <div class="pressure-display" id="pressureDisplay">Pressure: 0</div>
+            <div class="unison-display" id="activeUnison">Voices: 1</div>
+            <div class="effect-display" id="effectDisplay">Effect: None</div>
+            <div class="record-display" id="recordDisplay">Recording: Off</div>
+        </div>
+
+        <div class="recording-controls">
+            <button id="recordToggle" class="record-btn" aria-label="Toggle Recording" aria-pressed="false">● Record</button>
+            <button id="playbackToggle" class="record-btn" aria-label="Toggle Playback" aria-pressed="false">▶ Play</button>
+            <button id="clearPath" class="record-btn" aria-label="Clear Current Melody">✕ Clear</button>
+            <button id="loopToggle" class="record-btn" aria-label="Toggle Loop Playback" aria-pressed="false">🔄 Loop</button>
+            <div class="file-input-group">
+                <label for="uploadMelody" class="file-button" aria-label="Upload Melody File" tabindex="0" role="button">⬆️ Load File</label>
+                <input type="file" id="uploadMelody" accept=".json">
+                <button id="downloadMelodies" class="record-btn" aria-label="Download Melodies to File">⬇️ Save File</button>
+            </div>
+            <!-- New panel for detailed effect controls -->
+            <div id="effectControlsPanel" class="effect-controls-panel">
+                <div class="list-header">Effect Parameters:</div>
+                <!-- Effect parameters will be dynamically added here -->
+            </div>
+        </div>
+
+        <div class="melody-list" id="melodyList" style="display: none;">
+            <div class="list-header">Saved Melodies:</div>
+            <!-- Melodies will be dynamically added here -->
+        </div>
+
+        <div class="instructions" id="instructionsPanel">
+            <button class="panel-toggle-btn" aria-label="Collapse Instructions">_</button>
+            <strong>Enhanced Controls:</strong><br>
+            • Touch to play & record paths<br>
+            • <strong>Record:</strong> Capture melody paths<br>
+            • <strong>Play:</strong> Replay recordings<br>
+            • <strong>Loop:</strong> Continuous playback<br>
+            • <strong>Effects:</strong> Stackable effects with parameters<br>
+            • Multiple fingers = more voices<br>
+            • Horizontal = pitch, Vertical = volume
+            <br><br>
+            <strong>Keyboard Shortcuts:</strong><br>
+            • <strong>Space:</strong> Start/Stop Audio<br>
+            • <strong>R:</strong> Toggle Recording<br>
+            • <strong>P:</strong> Toggle Playback<br>
+            • <strong>L:</strong> Toggle Loop<br>
+            • <strong>C:</strong> Clear Melody
+            <div class="privacy-note">
+                <strong>Privacy Note:</strong> This application uses your browser's local storage to save melodies and settings. No data is transmitted to any server.
+                <br>
+                <strong>Compatibility:</strong> Requires a modern browser with Web Audio API support.
+            </div>
+        </div>
+
+        <div class="wave-visual">
+            <canvas class="wave-canvas" id="waveCanvas"></canvas>
+        </div>
+        <div id="audioStatus" class="status-inactive">Audio Inactive</div>
+    </div>
+
+    <div id="messageBox" role="alert" aria-live="assertive"></div>
+
+    <script type="module">
+        // The AudioEffectsManager and all effect classes are now defined directly within this script block.
+
+        /**
+         * Base Effect Class: Provides common properties and methods for all effects.
+         * It includes basic input/output routing, dry/wet mixing, and state management.
+         * @property {AudioContext} audioContext - The Web Audio API AudioContext.
+         * @property {string} name - The name of the effect.
+         * @property {AudioGainNode} input - The input gain node for the effect.
+         * @property {AudioGainNode} output - The output gain node for the effect.
+         * @property {AudioGainNode} wetGain - Gain node for the processed (wet) signal.
+         * @property {AudioGainNode} dryGain - Gain node for the unprocessed (dry) signal.
+         * @property {number} mix - The dry/wet mix ratio (0.0 = dry, 1.0 = wet).
+         * @property {boolean} isEnabled - Whether the effect is currently enabled in the chain.
+         * @property {boolean} isDisposed - Flag to prevent double disposal.
+         */
+        class BaseEffect {
+            constructor(audioContext, name) {
+                this.audioContext = audioContext;
+                this.name = name;
+                this.mix = 0.5; // Default wet mix (0.0 = dry, 1.0 = wet)
+                this.isEnabled = false; // Whether the effect is active in the chain
+                this.isDisposed = false; // Flag to prevent double disposal
+
+                try {
+                    this.input = this.audioContext.createGain();
+                    this.output = this.audioContext.createGain();
+                    this.wetGain = this.audioContext.createGain();
+                    this.dryGain = this.audioContext.createGain();
+                } catch (error) {
+                    console.error(`Failed to create audio nodes for ${name}:`, error);
+                    throw new Error(`Audio context initialization failed for ${name}`);
+                }
+
+                // Connect dry path directly through
+                this.input.connect(this.dryGain);
+                this.dryGain.connect(this.output);
+            }
+
+            /**
+             * Connects the effect's internal processing nodes.
+             * Must be implemented by subclasses.
+             */
+            _connectNodes() {
+                throw new Error("Subclasses must implement _connectNodes method.");
+            }
+
+            /**
+             * Sets the dry/wet mix for the effect.
+             * @param {number} mixValue A value between 0.0 (dry) and 1.0 (wet).
+             */
+            setMix(mixValue) {
+                this.mix = this._validateParameter(mixValue, 0.0, 1.0, 'mix');
+                const now = this.audioContext.currentTime;
+                this.wetGain.gain.cancelScheduledValues(now);
+                this.dryGain.gain.cancelScheduledValues(now);
+                this.wetGain.gain.setTargetAtTime(this.mix, now, 0.01);
+                this.dryGain.gain.setTargetAtTime(1 - this.mix, now, 0.01);
+            }
+
+            /**
+             * Connects this effect's output to another AudioNode.
+             * @param {AudioNode} destinationNode The node to connect to.
+             */
+            connect(destinationNode) {
+                this.output.connect(destinationNode);
+            }
+
+            /**
+             * Disconnects this effect's output.
+             */
+            disconnect() {
+                this.output.disconnect();
+            }
+
+            /**
+             * Enables the effect, connecting its wet path.
+             */
+            enable() {
+                if (!this.isEnabled) {
+                    this._connectNodes(); // Ensure internal nodes are connected
+                    this.setMix(this.mix); // Apply current mix
+                    this.isEnabled = true;
+                }
+            }
+
+            /**
+             * Disables the effect, disconnecting its wet path.
+             */
+            disable() {
+                if (this.isEnabled) {
+                    // Fade out wet signal before disconnecting
+                    this.wetGain.gain.setTargetAtTime(0.00001, this.audioContext.currentTime, 0.05); 
+                    setTimeout(() => {
+                        // Subclasses might need to implement specific disconnect logic if complex
+                        this.isEnabled = false;
+                    }, 100); // Allow time for fade out
+                }
+            }
+
+            /**
+             * Disposes of the effect, disconnecting all its nodes and cleaning up resources.
+             * Prevents memory leaks, especially for effects with oscillators.
+             */
+            dispose() {
+                if (this.isDisposed) return; // Already disposed
+
+                this.disconnect(); // Disconnect from the main chain
+                this.input.disconnect();
+                this.wetGain.disconnect();
+                this.dryGain.disconnect();
+                
+                this._cleanup(); // Call subclass-specific cleanup
+                this.isDisposed = true;
+                console.log(`${this.name} effect disposed.`);
+            }
+
+            /**
+             * Subclasses should override this method to clean up their specific audio nodes and resources.
+             * For example, stopping and disconnecting oscillators.
+             */
+            _cleanup() {
+                // Override in subclasses
+            }
+
+            /**
+             * Validates a numeric parameter, clamping it within a specified range.
+             * @param {number} value - The value to validate.
+             * @param {number} min - The minimum allowed value.
+             * @param {number} max - The maximum allowed value.
+             * @param {string} paramName - The name of the parameter for warning messages.
+             * @returns {number} The validated and clamped value.
+             */
+            _validateParameter(value, min, max, paramName) {
+                if (typeof value !== 'number' || isNaN(value)) {
+                    console.warn(`Invalid ${paramName} value for ${this.name}: ${value}. Using default.`);
+                    return Math.max(min, Math.min(max, (min + max) / 2)); // Return middle value as default
+                }
+                return Math.max(min, Math.min(max, value));
+            }
+
+            /**
+             * Returns the current state of the effect for saving/loading.
+             * @returns {object} The effect's state.
+             */
+            getState() {
+                return {
+                    name: this.name,
+                    mix: this.mix,
+                    isEnabled: this.isEnabled
+                };
+            }
+
+            /**
+             * Restores the effect's state from loaded data.
+             * @param {object} state The state object to restore from.
+             */
+            setState(state) {
+                this.setMix(state.mix);
+                if (state.isEnabled) {
+                    this.enable();
+                } else {
+                    this.disable();
+                }
+            }
+        }
+
+        /**
+         * Echo Effect (Delay): Simple delay with feedback.
+         */
+        class EchoEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'Echo');
+                try {
+                    this.delayNode = this.audioContext.createDelay(1.0); // Max delay of 1 second
+                    this.feedbackGain = this.audioContext.createGain();
+                } catch (error) {
+                    console.error(`Failed to create nodes for EchoEffect:`, error);
+                    throw error;
+                }
+                this.delayTime = 0.3; // Default delay time in seconds
+                this.feedback = 0.5; // Default feedback amount (0.0 to 1.0)
+
+                this._connectNodes(); // Connect internal nodes on instantiation
+            }
+
+            _connectNodes() {
+                // Input -> Delay -> Feedback -> Delay (feedback loop)
+                this.input.connect(this.delayNode);
+                this.delayNode.connect(this.feedbackGain);
+                this.feedbackGain.connect(this.delayNode); // Feedback loop
+                this.delayNode.connect(this.wetGain); // Wet signal to wet gain
+                this.wetGain.connect(this.output); // Wet gain to output
+
+                this.setDelayTime(this.delayTime);
+                this.setFeedback(this.feedback);
+            }
+
+            /**
+             * Sets the delay time for the echo.
+             * @param {number} time The delay time in seconds.
+             */
+            setDelayTime(time) {
+                this.delayTime = this._validateParameter(time, 0.01, 1.0, 'delayTime');
+                this.delayNode.delayTime.setValueAtTime(this.delayTime, this.audioContext.currentTime);
+            }
+
+            /**
+             * Sets the feedback amount for the echo.
+             * @param {number} feedback The feedback amount (0.0 to 1.0).
+             */
+            setFeedback(feedback) {
+                this.feedback = this._validateParameter(feedback, 0.0, 0.99, 'feedback'); // Cap at 0.99 to prevent infinite feedback
+                this.feedbackGain.gain.setValueAtTime(this.feedback, this.audioContext.currentTime);
+            }
+
+            _cleanup() {
+                this.delayNode.disconnect();
+                this.feedbackGain.disconnect();
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    delayTime: this.delayTime,
+                    feedback: this.feedback
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setDelayTime(state.delayTime);
+                this.setFeedback(state.feedback);
+            }
+        }
+
+        /**
+         * Reverb Effect: Uses a ConvolverNode for basic reverb.
+         */
+        class ReverbEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'Reverb');
+                try {
+                    this.convolverNode = this.audioContext.createConvolver();
+                } catch (error) {
+                    console.error(`Failed to create nodes for ReverbEffect:`, error);
+                    throw error;
+                }
+                this.decay = 2; // Default decay time for impulse response
+
+                this._connectNodes();
+                this._createImpulseResponse(this.decay);
+            }
+
+            _connectNodes() {
+                this.input.connect(this.convolverNode);
+                this.convolverNode.connect(this.wetGain);
+                this.wetGain.connect(this.output);
+            }
+
+            /**
+             * Creates a simple, randomized impulse response for the reverb node.
+             * @param {number} decay The decay time in seconds.
+             */
+            _createImpulseResponse(decay) {
+                const sampleRate = this.audioContext.sampleRate;
+                const length = sampleRate * decay;
+                const impulse = this.audioContext.createBuffer(2, length, sampleRate);
+                
+                for (let channel = 0; channel < 2; channel++) {
+                    const channelData = impulse.getChannelData(channel);
+                    for (let i = 0; i < length; i++) {
+                        // Exponential decay
+                        channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+                    }
+                }
+                this.convolverNode.buffer = impulse;
+            }
+
+            /**
+             * Sets the decay time for the reverb.
+             * @param {number} decay The decay time in seconds.
+             */
+            setDecay(decay) {
+                this.decay = this._validateParameter(decay, 0.1, 10, 'decay');
+                this._createImpulseResponse(this.decay); // Recreate impulse response
+            }
+
+            _cleanup() {
+                this.convolverNode.disconnect();
+                this.convolverNode.buffer = null; // Release buffer
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    decay: this.decay
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setDecay(state.decay);
+            }
+        }
+
+        /**
+         * Chorus Effect: Uses multiple modulated delays for a thickening effect.
+         */
+        class ChorusEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'Chorus');
+                try {
+                    this.delay1 = audioContext.createDelay(0.1);
+                    this.delay2 = audioContext.createDelay(0.1);
+                    this.lfo1 = audioContext.createOscillator();
+                    this.lfo2 = audioContext.createOscillator();
+                    this.lfoGain1 = audioContext.createGain();
+                    this.lfoGain2 = audioContext.createGain();
+                } catch (error) {
+                    console.error(`Failed to create nodes for ChorusEffect:`, error);
+                    throw error;
+                }
+
+                this.rate = 1; // LFO rate in Hz
+                this.depth = 0.002; // LFO depth in seconds (delay modulation amount)
+
+                this._connectNodes();
+                this._setupLFOs();
+            }
+
+            _connectNodes() {
+                // Dry signal handled by BaseEffect
+                this.input.connect(this.delay1);
+                this.input.connect(this.delay2); // Two delay lines for stereo chorus
+
+                this.delay1.connect(this.wetGain);
+                this.delay2.connect(this.wetGain);
+                this.wetGain.connect(this.output);
+            }
+
+            _setupLFOs() {
+                const now = this.audioContext.currentTime;
+
+                this.lfo1.type = 'sine';
+                this.lfo1.frequency.setValueAtTime(this.rate, now);
+                this.lfoGain1.gain.setValueAtTime(this.depth, now);
+                this.lfo1.connect(this.lfoGain1);
+                this.lfoGain1.connect(this.delay1.delayTime);
+                this.lfo1.start(0);
+
+                this.lfo2.type = 'sine';
+                this.lfo2.frequency.setValueAtTime(this.rate * 1.05, now); // Slightly different rate for stereo width
+                this.lfoGain2.gain.setValueAtTime(this.depth, now);
+                this.lfo2.connect(this.lfoGain2);
+                this.lfoGain2.connect(this.delay2.delayTime);
+                this.lfo2.start(0);
+            }
+
+            /**
+             * Sets the LFO rate for the chorus.
+             * @param {number} rate The LFO rate in Hz.
+             */
+            setRate(rate) {
+                this.rate = this._validateParameter(rate, 0.1, 10, 'rate');
+                const now = this.audioContext.currentTime;
+                this.lfo1.frequency.setTargetAtTime(this.rate, now, 0.01);
+                this.lfo2.frequency.setTargetAtTime(this.rate * 1.05, now, 0.01);
+            }
+
+            /**
+             * Sets the LFO depth for the chorus.
+             * @param {number} depth The LFO depth in seconds (delay modulation amount).
+             */
+            setDepth(depth) {
+                this.depth = this._validateParameter(depth, 0.0001, 0.01, 'depth');
+                const now = this.audioContext.currentTime;
+                this.lfoGain1.gain.setTargetAtTime(this.depth, now, 0.01);
+                this.lfoGain2.gain.setTargetAtTime(this.depth, now, 0.01);
+            }
+
+            _cleanup() {
+                if (this.lfo1) {
+                    this.lfo1.stop();
+                    this.lfo1.disconnect();
+                }
+                if (this.lfo2) {
+                    this.lfo2.stop();
+                    this.lfo2.disconnect();
+                }
+                this.lfoGain1.disconnect();
+                this.lfoGain2.disconnect();
+                this.delay1.disconnect();
+                this.delay2.disconnect();
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    rate: this.rate,
+                    depth: this.depth
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setRate(state.rate);
+                this.setDepth(state.depth);
+            }
+        }
+
+        /**
+         * Flanger Effect: Short, modulated delay with feedback for a "sweeping" sound.
+         */
+        class FlangerEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'Flanger');
+                try {
+                    this.delayNode = audioContext.createDelay(0.02); // Very short delay
+                    this.feedbackGain = audioContext.createGain();
+                    this.lfo = audioContext.createOscillator();
+                    this.lfoGain = audioContext.createGain();
+                } catch (error) {
+                    console.error(`Failed to create nodes for FlangerEffect:`, error);
+                    throw error;
+                }
+
+                this.rate = 0.5; // LFO rate in Hz
+                this.depth = 0.005; // LFO depth in seconds
+                this.feedback = 0.7; // Feedback amount
+
+                this._connectNodes();
+                this._setupLFO();
+            }
+
+            _connectNodes() {
+                this.input.connect(this.delayNode);
+                this.delayNode.connect(this.feedbackGain);
+                this.feedbackGain.connect(this.delayNode); // Feedback loop
+                this.delayNode.connect(this.wetGain);
+                this.wetGain.connect(this.output);
+            }
+
+            _setupLFO() {
+                const now = this.audioContext.currentTime;
+                this.lfo.type = 'sine';
+                this.lfo.frequency.setValueAtTime(this.rate, now);
+                this.lfoGain.gain.setValueAtTime(this.depth, now);
+                this.lfo.connect(this.lfoGain);
+                this.lfoGain.connect(this.delayNode.delayTime);
+                this.lfo.start(0);
+
+                this.setFeedback(this.feedback);
+            }
+
+            setRate(rate) {
+                this.rate = this._validateParameter(rate, 0.1, 5, 'rate');
+                this.lfo.frequency.setValueAtTime(this.rate, this.audioContext.currentTime);
+            }
+
+            setDepth(depth) {
+                this.depth = this._validateParameter(depth, 0.0001, 0.01, 'depth');
+                this.lfoGain.gain.setValueAtTime(this.depth, this.audioContext.currentTime);
+            }
+
+            setFeedback(feedback) {
+                this.feedback = this._validateParameter(feedback, 0.0, 0.99, 'feedback');
+                this.feedbackGain.gain.setValueAtTime(this.feedback, this.audioContext.currentTime);
+            }
+
+            _cleanup() {
+                if (this.lfo) {
+                    this.lfo.stop();
+                    this.lfo.disconnect();
+                }
+                this.lfoGain.disconnect();
+                this.delayNode.disconnect();
+                this.feedbackGain.disconnect();
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    rate: this.rate,
+                    depth: this.depth,
+                    feedback: this.feedback
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setRate(state.rate);
+                this.setDepth(state.depth);
+                this.setFeedback(state.feedback);
+            }
+        }
+
+        /**
+         * Phaser Effect: Uses all-pass filters with LFO modulation for a "whooshing" sound.
+         */
+        class PhaserEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'Phaser');
+                try {
+                    this.filters = [];
+                    this.lfo = audioContext.createOscillator();
+                    this.lfoGain = audioContext.createGain();
+                    this.feedbackGain = audioContext.createGain(); 
+                } catch (error) {
+                    console.error(`Failed to create nodes for PhaserEffect:`, error);
+                    throw error;
+                }
+
+                this.stages = 4; // Number of all-pass filter stages
+                this.rate = 0.8; // LFO rate in Hz
+                this.depth = 1000; // LFO depth (frequency range)
+                this.feedback = 0.7; // Feedback amount
+
+                this._createFilters();
+                this._connectNodes(); // Main chain connections
+                this._setupLFO(); // LFO and feedback connections
+            }
+
+            _createFilters() {
+                for (let i = 0; i < this.stages; i++) {
+                    let filter;
+                    try {
+                        filter = this.audioContext.createBiquadFilter();
+                    } catch (error) {
+                        console.error(`Failed to create BiquadFilter for PhaserEffect stage ${i}:`, error);
+                        throw error;
+                    }
+                    filter.type = 'allpass';
+                    filter.Q.setValueAtTime(1, this.audioContext.currentTime); // Fixed Q for allpass
+                    this.filters.push(filter);
+                }
+            }
+
+            _connectNodes() {
+                // Connect filters in series
+                this.input.connect(this.filters[0]);
+                for (let i = 0; i < this.stages - 1; i++) {
+                    this.filters[i].connect(this.filters[i + 1]);
+                }
+                this.filters[this.stages - 1].connect(this.wetGain);
+                this.wetGain.connect(this.output);
+                // The dry path is already handled by BaseEffect: input -> dryGain -> output
+            }
+
+            _setupLFO() {
+                const now = this.audioContext.currentTime;
+                this.lfo.type = 'sine';
+                this.lfo.frequency.setValueAtTime(this.rate, now);
+                this.lfoGain.gain.setValueAtTime(this.depth / 2, now); // LFO modulates around a center frequency
+                this.lfo.connect(this.lfoGain);
+
+                // Connect LFO to frequency of all filters
+                this.filters.forEach(filter => {
+                    this.lfoGain.connect(filter.frequency);
+                    // Initial frequency for allpass filters
+                    filter.frequency.setValueAtTime(1000, now); // Base frequency
+                });
+                this.lfo.start(0);
+
+                // Feedback path
+                this.filters[this.stages - 1].connect(this.feedbackGain);
+                this.feedbackGain.connect(this.filters[0]);
+
+                this.setFeedback(this.feedback);
+            }
+
+            setRate(rate) {
+                this.rate = this._validateParameter(rate, 0.1, 5, 'rate');
+                this.lfo.frequency.setValueAtTime(this.rate, this.audioContext.currentTime);
+            }
+
+            setDepth(depth) {
+                this.depth = this._validateParameter(depth, 100, 5000, 'depth');
+                this.lfoGain.gain.setValueAtTime(this.depth / 2, this.audioContext.currentTime);
+                // Adjust base frequency based on depth to ensure modulation range is sensible
+                this.filters.forEach(filter => {
+                    filter.frequency.setValueAtTime(this.depth / 2, this.audioContext.currentTime);
+                });
+            }
+
+            setFeedback(feedback) {
+                this.feedback = this._validateParameter(feedback, 0.0, 0.99, 'feedback');
+                this.feedbackGain.gain.setValueAtTime(this.feedback, this.audioContext.currentTime);
+            }
+
+            _cleanup() {
+                if (this.lfo) {
+                    this.lfo.stop();
+                    this.lfo.disconnect();
+                }
+                this.lfoGain.disconnect();
+                this.feedbackGain.disconnect();
+                this.filters.forEach(filter => filter.disconnect());
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    rate: this.rate,
+                    depth: this.depth,
+                    feedback: this.feedback
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setRate(state.rate);
+                this.setDepth(state.depth);
+                this.setFeedback(state.feedback);
+            }
+        }
+
+        /**
+         * Distortion Effect: Uses a WaveShaperNode for non-linear distortion.
+         */
+        class DistortionEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'Distortion');
+                try {
+                    this.shaperNode = audioContext.createWaveShaper();
+                } catch (error) {
+                    console.error(`Failed to create nodes for DistortionEffect:`, error);
+                    throw error;
+                }
+                this.amount = 0.5; // Distortion amount (0.0 to 1.0)
+
+                this._connectNodes();
+                this._setCurve(this.amount);
+            }
+
+            _connectNodes() {
+                this.input.connect(this.shaperNode);
+                this.shaperNode.connect(this.wetGain);
+                this.wetGain.connect(this.output);
+            }
+
+            /**
+             * Creates a distortion curve for the WaveShaperNode.
+             * @param {number} amount The distortion amount (0.0 to 1.0).
+             * @returns {Float32Array} The curve.
+             */
+            _makeDistortionCurve(amount) {
+                const k = typeof amount === 'number' ? amount * 100 : 50; // Scale amount for a more noticeable effect
+                const n_samples = 44100;
+                const curve = new Float32Array(n_samples);
+                const deg = Math.PI / 180;
+                for (let i = 0; i < n_samples; i++) {
+                    const x = i * 2 / n_samples - 1;
+                    curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            }
+
+            /**
+             * Sets the distortion amount.
+             * @param {number} amount The distortion amount (0.0 to 1.0).
+             */
+            setAmount(amount) {
+                this.amount = this._validateParameter(amount, 0.0, 1.0, 'amount');
+                this._setCurve(this.amount);
+            }
+
+            _setCurve(amount) {
+                this.shaperNode.curve = this._makeDistortionCurve(amount);
+            }
+
+            _cleanup() {
+                this.shaperNode.disconnect();
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    amount: this.amount
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setAmount(state.amount);
+            }
+        }
+
+        /**
+         * BitCrusher Effect: Reduces bit depth and sample rate using a WaveShaperNode for approximation.
+         * This version avoids the deprecated ScriptProcessorNode.
+         */
+        class BitCrusherEffect extends BaseEffect {
+            constructor(audioContext) {
+                super(audioContext, 'BitCrusher');
+                try {
+                    this.shaperNode = audioContext.createWaveShaper();
+                } catch (error) {
+                    console.error(`Failed to create nodes for BitCrusherEffect:`, error);
+                    throw error;
+                }
+                this.bitDepth = 8; // Default bit depth (1 to 16)
+                // Sample rate reduction is approximated visually by the bit depth curve,
+                // or could be handled by a more complex AudioWorklet if needed.
+                this.sampleRateReduction = 1; // Kept for state, but not directly implemented in this version
+
+                this._connectNodes();
+                this._updateCurve(); // Initial curve setup
+            }
+
+            _connectNodes() {
+                this.input.connect(this.shaperNode);
+                this.shaperNode.connect(this.wetGain);
+                this.wetGain.connect(this.output);
+            }
+
+            /**
+             * Creates a stepped distortion curve for the WaveShaperNode to simulate bit depth reduction.
+             */
+            _updateCurve() {
+                const samples = 65536; // A sufficiently large number of samples for the curve
+                const curve = new Float32Array(samples);
+                const step = 2 / Math.pow(2, this.bitDepth); // Size of each quantization step
+                
+                for (let i = 0; i < samples; i++) {
+                    const x = (i / samples) * 2 - 1; // Normalize x from -1 to 1
+                    curve[i] = Math.floor(x / step) * step;
+                }
+                this.shaperNode.curve = curve;
+            }
+
+            /**
+             * Sets the bit depth for the bit crusher.
+             * @param {number} depth The bit depth (1 to 16).
+             */
+            setBitDepth(depth) {
+                this.bitDepth = this._validateParameter(depth, 1, 16, 'bitDepth');
+                this.bitDepth = Math.round(this.bitDepth); // Ensure integer bit depth
+                this._updateCurve(); // Recalculate curve with new bit depth
+            }
+
+            /**
+             * Sets the sample rate reduction factor (not directly implemented in this WaveShaper version).
+             * @param {number} reduction The reduction factor (1 = no reduction, higher = more reduction).
+             */
+            setSampleRateReduction(reduction) {
+                // This parameter is maintained for state saving/loading but doesn't affect audio in this simplified BitCrusher.
+                this.sampleRateReduction = this._validateParameter(reduction, 1, 16, 'sampleRateReduction');
+                this.sampleRateReduction = Math.round(this.sampleRateReduction);
+                console.warn("Sample Rate Reduction is not actively implemented in this BitCrusher version (using WaveShaper).");
+            }
+
+            _cleanup() {
+                this.shaperNode.disconnect();
+                this.shaperNode.curve = null; // Release curve data
+            }
+
+            getState() {
+                return {
+                    ...super.getState(),
+                    bitDepth: this.bitDepth,
+                    sampleRateReduction: this.sampleRateReduction
+                };
+            }
+
+            setState(state) {
+                super.setState(state);
+                this.setBitDepth(state.bitDepth);
+                this.setSampleRateReduction(state.sampleRateReduction);
+            }
+        }
+
+
+        /**
+         * AudioEffectsManager Class: Manages a stack of audio effects, allowing them to be enabled/disabled
+         * and their parameters controlled.
+         * @property {AudioContext} audioContext - The Web Audio API AudioContext.
+         * @property {Map<string, BaseEffect>} effects - Stores effect instances by name.
+         * @property {BaseEffect[]} effectChain - Ordered array of currently enabled effect instances.
+         * @property {AudioGainNode} inputNode - The main input node for the entire effect chain.
+         * @property {AudioGainNode} outputNode - The main output node for the entire effect chain.
+         * @property {boolean} isDisposed - Flag to prevent double disposal.
+         */
+        class AudioEffectsManager {
+            constructor(audioContext) {
+                this.audioContext = audioContext;
+                this.effects = new Map(); // Stores effect instances by name
+                this.effectChain = []; // Ordered array of active effect instances
+                this.isDisposed = false;
+
+                try {
+                    this.inputNode = this.audioContext.createGain(); // Main input for all audio
+                    this.outputNode = this.audioContext.createGain(); // Main output to destination
+                } catch (error) {
+                    console.error(`Failed to create main effect manager nodes:`, error);
+                    throw new Error(`AudioEffectsManager initialization failed.`);
+                }
+
+                // Initialize all available effects
+                this._addEffect(new EchoEffect(audioContext));
+                this._addEffect(new ReverbEffect(audioContext));
+                this._addEffect(new ChorusEffect(audioContext));
+                this._addEffect(new FlangerEffect(audioContext));
+                this._addEffect(new PhaserEffect(audioContext));
+                this._addEffect(new DistortionEffect(audioContext));
+                this._addEffect(new BitCrusherEffect(audioContext));
+
+                // Connect input to output directly initially
+                this.inputNode.connect(this.outputNode);
+                this.outputNode.connect(this.audioContext.destination);
+            }
+
+            /**
+             * Adds an effect instance to the manager.
+             * @param {BaseEffect} effectInstance The effect object to add.
+             */
+            _addEffect(effectInstance) {
+                this.effects.set(effectInstance.name, effectInstance);
+            }
+
+            /**
+             * Rebuilds the audio effect chain based on enabled effects.
+             */
+            _rebuildChain() {
+                // Disconnect current chain
+                this.inputNode.disconnect();
+                this.effectChain.forEach(effect => {
+                    if (!effect.isDisposed) { // Only disconnect if not already disposed
+                        effect.disconnect();
+                    }
+                });
+                this.outputNode.disconnect(); // Disconnect from destination before re-connecting
+
+                this.effectChain = Array.from(this.effects.values()).filter(effect => effect.isEnabled && !effect.isDisposed);
+
+                if (this.effectChain.length === 0) {
+                    // No effects active, connect input directly to output
+                    this.inputNode.connect(this.outputNode);
+                } else {
+                    // Connect input to the first effect
+                    this.inputNode.connect(this.effectChain[0].input);
+                    this.effectChain[0].setMix(this.effectChain[0].mix); // Ensure mix is applied
+
+                    // Connect effects in series
+                    for (let i = 0; i < this.effectChain.length - 1; i++) {
+                        this.effectChain[i].connect(this.effectChain[i + 1].input);
+                        this.effectChain[i + 1].setMix(this.effectChain[i + 1].mix); // Ensure mix is applied
+                    }
+                    // Connect the last effect to the output
+                    this.effectChain[this.effectChain.length - 1].connect(this.outputNode);
+                }
+                // Always connect main output to audio context destination
+                this.outputNode.connect(this.audioContext.destination);
+            }
+
+            /**
+             * Toggles an effect's enabled state and rebuilds the chain.
+             * @param {string} effectName The name of the effect to toggle.
+             * @returns {boolean|null} The new enabled state, or null if effect not found.
+             */
+            toggleEffect(effectName) {
+                const effect = this.effects.get(effectName);
+                if (effect) {
+                    if (effect.isEnabled) {
+                        effect.disable();
+                    } else {
+                        effect.enable();
+                    }
+                    this._rebuildChain();
+                    return effect.isEnabled;
+                }
+                console.warn(`Effect "${effectName}" not found.`);
+                return null;
+            }
+
+            /**
+             * Gets an effect instance by name.
+             * @param {string} effectName The name of the effect.
+             * @returns {BaseEffect|undefined} The effect instance, or undefined if not found.
+             */
+            getEffect(effectName) {
+                return this.effects.get(effectName);
+            }
+
+            /**
+             * Sets a parameter for a specific effect.
+             * @param {string} effectName The name of the effect.
+             * @param {string} paramName The name of the parameter to set (e.g., 'mix', 'delayTime', 'rate').
+             * @param {number} value The value to set.
+             */
+            setEffectParameter(effectName, paramName, value) {
+                const effect = this.effects.get(effectName);
+                if (effect && typeof effect[`set${paramName.charAt(0).toUpperCase() + paramName.slice(1)}`] === 'function') {
+                    effect[`set${paramName.charAt(0).toUpperCase() + paramName.slice(1)}`](value);
+                    // Rebuild chain if mix or enable state might have changed (though setMix doesn't change chain structure)
+                    if (paramName === 'mix') {
+                         this._rebuildChain(); // Ensure mix is applied correctly in the chain
+                    }
+                } else {
+                    console.warn(`Effect "${effectName}" or parameter "${paramName}" not found or setter not available.`);
+                }
+            }
+
+            /**
+             * Returns the current state of all effects for saving.
+             * @returns {object} An object where keys are effect names and values are their states.
+             */
+            getAllEffectsState() {
+                const state = {};
+                this.effects.forEach((effect, name) => {
+                    state[name] = effect.getState();
+                });
+                return state;
+            }
+
+            /**
+             * Restores the state of all effects from loaded data.
+             * @param {object} allEffectsState The loaded state object.
+             */
+            setAllEffectsState(allEffectsState) {
+                this.effects.forEach((effect, name) => {
+                    if (allEffectsState[name]) {
+                        effect.setState(allEffectsState[name]);
+                    }
+                });
+                this._rebuildChain(); // Rebuild chain after setting all states
+            }
+
+            /**
+             * Disposes of all managed effects and disconnects main input/output nodes.
+             */
+            dispose() {
+                if (this.isDisposed) return;
+
+                this.effects.forEach(effect => effect.dispose());
+                this.effects.clear();
+                this.effectChain = [];
+                
+                this.inputNode.disconnect();
+                this.outputNode.disconnect();
+                this.isDisposed = true;
+                console.log("AudioEffectsManager disposed.");
+            }
+        }
+
+        /**
+         * Displays a temporary message box to the user.
+         * @param {string} message The message to display.
+         * @param {number} duration The duration in milliseconds to show the message.
+         */
+        function showMessageBox(message, duration = 3000) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.classList.add('show');
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, duration);
+        }
+
+        /**
+         * Utility function to map a value from one range to another (linear to logarithmic).
+         * @param {number} value The input value.
+         * @param {number} inMin The minimum of the input range.
+         * @param {number} inMax The maximum of the input range.
+         * @param {number} outMin The minimum of the output range (logarithmic).
+         * @param {number} outMax The maximum of the output range (logarithmic).
+         * @returns {number} The mapped value.
+         */
+        function mapRangeLog(value, inMin, inMax, outMin, outMax) {
+            const normalizedValue = (value - inMin) / (inMax - inMin);
+            const logOutMin = Math.log(outMin);
+            const logOutMax = Math.log(outMax);
+            const logResult = logOutMin + (logOutMax - logOutMin) * normalizedValue;
+            return Math.exp(logResult);
+        }
+
+        /**
+         * VoiceManager Class: Manages the creation, allocation, and control of individual audio voices (oscillators).
+         * It pre-allocates oscillators to avoid glitches from starting/stopping them frequently.
+         * @property {AudioContext} audioContext - The Web Audio API AudioContext.
+         * @property {AudioNode} destinationNode - The node where voices will connect (e.g., AudioEffectsManager's input).
+         * @property {object[]} voicePool - Stores all pre-allocated voice objects.
+         * @property {Map<any, object>} activeVoices - Maps touchId/playbackId to active voice objects.
+         */
+        class VoiceManager {
+            constructor(audioContext, maxVoices = 8, destinationNode) {
+                this.audioContext = audioContext;
+                this.destinationNode = destinationNode; // The node where voices will connect (e.g., AudioEffectsManager's input)
+                this.voicePool = []; // Stores all pre-allocated voice objects
+                this.activeVoices = new Map(); // Maps touchId/playbackId to active voice objects
+                this.initializeVoicePool(maxVoices);
+            }
+
+            /**
+             * Initializes a pool of `maxVoices` oscillators, gain nodes, and panner nodes.
+             * These oscillators are started immediately and kept running; their gain is controlled.
+             * @param {number} count The maximum number of voices to pre-allocate.
+             */
+            initializeVoicePool(count) {
+                // Disconnect and clear existing voices before re-initializing
+                this.disconnectAllVoices();
+                this.voicePool = [];
+
+                for (let i = 0; i < count; i++) {
+                    let oscillator, gainNode, panNode;
+                    try {
+                        oscillator = this.audioContext.createOscillator();
+                        gainNode = this.audioContext.createGain();
+                        panNode = this.audioContext.createStereoPanner(); // For stereo spread
+                    } catch (error) {
+                        console.error(`Failed to create audio nodes for voice ${i}:`, error);
+                        // Attempt to continue, but voice might be unusable
+                        continue;
+                    }
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(panNode);
+                    panNode.connect(this.destinationNode); // Connect to the specified destination node
+                    
+                    // Start oscillator immediately and set initial gain to silent
+                    oscillator.start();
+                    gainNode.gain.setValueAtTime(0.00001, this.audioContext.currentTime);
+
+                    this.voicePool.push({
+                        oscillator: oscillator,
+                        gainNode: gainNode,
+                        panNode: panNode,
+                        isActive: false, // Flag to track if voice is currently in use
+                        touchId: null,   // Stores the ID of the touch/playback using this voice
+                        isLive: false    // True if allocated by live touch, false if by playback
+                    });
+                }
+            }
+
+            /**
+             * Allocates an available voice from the pool and activates it.
+             * @param {any} id A unique identifier for the touch or playback event.
+             * @param {number} frequency The target frequency for the voice.
+             * @param {number} volume The target volume for the voice.
+             * @param {number} pan The target stereo pan for the voice (-1 to 1).
+             * @param {string} waveType The waveform type for the voice.
+             * @param {boolean} isLive True if this voice is for live input, false for playback.
+             * @returns {object|null} The allocated voice object, or null if no voices are available.
+             */
+            allocateVoice(id, frequency, volume, pan, waveType, isLive) {
+                // Try to find an inactive voice
+                let voice = this.voicePool.find(v => !v.isActive);
+
+                // If no inactive voice, try to re-allocate a live voice for a new live touch
+                // or the oldest live voice if we're at max capacity for new live touches.
+                // This prioritizes playback voices if they are active.
+                if (!voice && isLive) {
+                    // Find the oldest active live voice to re-allocate (if all voices are active)
+                    const oldestLiveVoice = Array.from(this.activeVoices.values())
+                                                .filter(v => v.isLive)
+                                                .sort((a, b) => a.timestamp - b.timestamp)[0];
+                    if (oldestLiveVoice) {
+                        this.releaseVoice(oldestLiveVoice.touchId); // Release it first
+                        voice = oldestLiveVoice; // Then re-use it
+                    }
+                }
+                
+                if (!voice) {
+                    console.warn("No available voices to allocate.");
+                    return null;
+                }
+
+                voice.isActive = true;
+                voice.touchId = id;
+                voice.isLive = isLive;
+                voice.timestamp = this.audioContext.currentTime; // Mark activation time for potential re-allocation
+
+                const now = this.audioContext.currentTime;
+                voice.oscillator.type = waveType; // Set waveform type
+
+                // Ensure frequency is finite
+                const safeFrequency = this._validateParameter(frequency, 0, this.audioContext.sampleRate / 2, 'frequency');
+                voice.oscillator.frequency.cancelScheduledValues(now);
+                voice.oscillator.frequency.setTargetAtTime(safeFrequency, now, 0.01);
+
+                // Ensure volume is finite and non-negative
+                const safeVolume = this._validateParameter(volume, 0.0, 1.0, 'volume');
+                voice.gainNode.gain.cancelScheduledValues(now);
+                voice.gainNode.gain.setTargetAtTime(safeVolume, now, 0.01);
+
+                // Ensure pan is finite
+                const safePan = this._validateParameter(pan, -1.0, 1.0, 'pan');
+                voice.panNode.pan.cancelScheduledValues(now);
+                voice.panNode.pan.setTargetAtTime(safePan, now, 0.01);
+                
+                this.activeVoices.set(id, voice);
+                return voice;
+            }
+
+            /**
+             * Updates the parameters of an actively playing voice.
+             * @param {any} id The unique identifier of the voice to update.
+             * @param {number} frequency The new target frequency.
+             * @param {number} volume The new target volume.
+             * @param {number|null} pan The new target stereo pan, or null to keep current.
+             * @param {string|null} waveType The new waveform type, or null to keep current.
+             */
+            updateVoice(id, frequency, volume, pan = null, waveType = null) {
+                const voice = this.activeVoices.get(id);
+                if (!voice || !voice.isActive) return;
+
+                const now = this.audioContext.currentTime;
+                if (waveType && voice.oscillator.type !== waveType) {
+                    voice.oscillator.type = waveType;
+                }
+
+                // Ensure frequency is finite
+                const safeFrequency = this._validateParameter(frequency, 0, this.audioContext.sampleRate / 2, 'frequency');
+                voice.oscillator.frequency.cancelScheduledValues(now);
+                voice.oscillator.frequency.setTargetAtTime(safeFrequency, now, 0.005);
+
+                // Ensure volume is finite and non-negative
+                const safeVolume = this._validateParameter(volume, 0.0, 1.0, 'volume');
+                voice.gainNode.gain.cancelScheduledValues(now);
+                voice.gainNode.gain.setTargetAtTime(safeVolume, now, 0.005);
+
+                if (pan !== null) {
+                    // Ensure pan is finite
+                    const safePan = this._validateParameter(pan, -1.0, 1.0, 'pan');
+                    voice.panNode.pan.cancelScheduledValues(now);
+                    voice.panNode.pan.setTargetAtTime(safePan, now, 0.005);
+                }
+            }
+
+            /**
+             * Releases a voice, fading it out and marking it as inactive for reuse.
+             * @param {any} id The unique identifier of the voice to release.
+             */
+            releaseVoice(id) {
+                const voice = this.activeVoices.get(id);
+                if (!voice || !voice.isActive) return;
+
+                const now = this.audioContext.currentTime;
+                voice.gainNode.gain.cancelScheduledValues(now);
+                voice.gainNode.gain.setTargetAtTime(0.00001, now, 0.1); // Fade out
+
+                // After fade out, mark as inactive and remove from active map
+                setTimeout(() => {
+                    voice.isActive = false;
+                    voice.touchId = null;
+                    voice.isLive = false;
+                    this.activeVoices.delete(id);
+                }, 200); // Allow time for fade out
+            }
+
+            /**
+             * Disconnects all voices from the audio graph and stops their oscillators.
+             * Called when the AudioContext is closed or VoiceManager is re-initialized.
+             */
+            disconnectAllVoices() {
+                this.voicePool.forEach(voice => {
+                    try {
+                        voice.gainNode.disconnect();
+                        voice.panNode.disconnect();
+                        // Oscillators were started once. If the audio context is closing, they will be garbage collected.
+                        // If re-initializing, we don't necessarily stop them, just disconnect.
+                    } catch (e) {
+                        console.warn("Error disconnecting voice nodes:", e);
+                    }
+                    voice.isActive = false;
+                    voice.touchId = null;
+                    voice.isLive = false;
+                });
+                this.activeVoices.clear();
+            }
+
+            /**
+             * Validates a numeric parameter, clamping it within a specified range.
+             * @param {number} value - The value to validate.
+             * @param {number} min - The minimum allowed value.
+             * @param {number} max - The maximum allowed value.
+             * @param {string} paramName - The name of the parameter for warning messages.
+             * @returns {number} The validated and clamped value.
+             */
+            _validateParameter(value, min, max, paramName) {
+                if (typeof value !== 'number' || isNaN(value)) {
+                    console.warn(`Invalid ${paramName} value for VoiceManager: ${value}. Using default.`);
+                    return Math.max(min, Math.min(max, (min + max) / 2)); // Return middle value as default
+                }
+                return Math.max(min, Math.min(max, value));
+            }
+        }
+
+        /**
+         * UnisonProcessor Class: Handles calculations for unison voice detuning, panning, and phase.
+         * Implements professional-grade spread algorithms.
+         */
+        class UnisonProcessor {
+            constructor() {
+                this.spreadModes = {
+                    'centered': this.centeredSpread,
+                    'exponential': this.exponentialSpread,
+                    'chord': this.chordSpread
+                };
+            }
+
+            /**
+             * Calculates frequency, pan, and phase for a specific voice within a unison stack.
+             * @param {number} baseFreq The fundamental frequency.
+             * @param {number} voiceIndex The index of the current voice (0 to totalVoices-1).
+             * @param {number} totalVoices The total number of voices in the unison.
+             * @param {number} spreadAmount The user-defined spread amount (0-10, from slider).
+             * @param {string} mode The spread mode ('centered', 'exponential', 'chord').
+             * @returns {{frequency: number, pan: number, phase: number}} Calculated parameters for the voice.
+             */
+            calculateVoiceParameters(baseFreq, voiceIndex, totalVoices, spreadAmount, mode = 'centered') {
+                if (totalVoices === 1) {
+                    return { frequency: baseFreq, pan: 0, phase: 0 };
+                }
+
+                const spreadFunc = this.spreadModes[mode] || this.spreadModes['centered'];
+                return spreadFunc.call(this, baseFreq, voiceIndex, totalVoices, spreadAmount);
+            }
+
+            /**
+             * Calculates a centered frequency spread in cents.
+             * @param {number} baseFreq
+             * @param {number} voiceIndex
+             * @param {number} totalVoices
+             * @param {number} spreadAmount
+             * @returns {{frequency: number, pan: number, phase: number}}
+             */
+            centeredSpread(baseFreq, voiceIndex, totalVoices, spreadAmount) {
+                const maxDetuneCents = spreadAmount * 50; // Max 50 cents per spread unit (e.g., spread 10 = 500 cents = 5 semitones)
+                // Normalize voiceIndex to a range from -0.5 to 0.5 (or slightly wider for edge voices)
+                const spreadPosition = (voiceIndex / (totalVoices - 1)) - 0.5; // -0.5 to 0.5 for totalVoices > 1
+                
+                const detuneCents = spreadPosition * maxDetuneCents * 2; // Spread across the full range
+                
+                // Convert cents to frequency ratio: 2^(cents/1200)
+                const frequencyRatio = Math.pow(2, detuneCents / 1200);
+                const frequency = baseFreq * frequencyRatio;
+                
+                const pan = this.calculateStereoPan(voiceIndex, totalVoices);
+                const phase = (voiceIndex * 137.5) % 360; // Golden angle distribution for phase
+                
+                return { frequency, pan, phase };
+            }
+
+            /**
+             * Calculates an exponential frequency spread in cents.
+             * @param {number} baseFreq
+             * @param {number} voiceIndex
+             * @param {number} totalVoices
+             * @param {number} spreadAmount
+             * @returns {{frequency: number, pan: number, phase: number}}
+             */
+            exponentialSpread(baseFreq, voiceIndex, totalVoices, spreadAmount) {
+                const maxDetuneCents = spreadAmount * 70; // Slightly more aggressive exponential spread
+                const spreadPosition = (voiceIndex / (totalVoices - 1)) - 0.5;
+                // Apply an exponential curve (e.g., power of 2 or 3)
+                const exponentialCurve = Math.sign(spreadPosition) * Math.pow(Math.abs(spreadPosition), 2);
+                const detuneCents = exponentialCurve * maxDetuneCents * 2;
+                
+                const frequencyRatio = Math.pow(2, detuneCents / 1200);
+                const frequency = baseFreq * frequencyRatio;
+                const pan = this.calculateStereoPan(voiceIndex, totalVoices);
+                const phase = (voiceIndex * 137.5) % 360;
+                
+                return { frequency, pan, phase };
+            }
+
+            /**
+             * Calculates a chord-like frequency spread using fixed intervals.
+             * @param {number} baseFreq
+             * @param {number} voiceIndex
+             * @param {number} totalVoices
+             * @param {number} spreadAmount
+             * @returns {{frequency: number, pan: number, phase: number}}
+             */
+            chordSpread(baseFreq, voiceIndex, totalVoices, spreadAmount) {
+                // Example intervals in semitones (can be customized)
+                const intervals = [0, 3, 7, 10, 12, 15, 19, 22]; // Minor 3rd, Perfect 5th, Minor 7th, Octave, etc.
+                const semitoneOffset = intervals[voiceIndex % intervals.length] * (spreadAmount / 10); // Scale by spreadAmount
+                
+                const frequencyRatio = Math.pow(2, semitoneOffset / 12);
+                const frequency = baseFreq * frequencyRatio;
+                const pan = this.calculateStereoPan(voiceIndex, totalVoices);
+                const phase = 0; // Keep phases aligned for chord mode
+                
+                return { frequency, pan, phase };
+            }
+
+            /**
+             * Calculates the stereo pan position for a voice.
+             * @param {number} voiceIndex
+             * @param {number} totalVoices
+             * @returns {number} Pan value (-1 for full left, 1 for full right).
+             */
+            calculateStereoPan(voiceIndex, totalVoices) {
+                if (totalVoices === 1) return 0;
+                
+                // Distribute voices evenly across the stereo field
+                // -1 (left) to 1 (right)
+                return -1 + (2 * voiceIndex / (totalVoices - 1));
+            }
+        }
+
+        /**
+         * MultiTouchManager Class: Handles all multi-touch and mouse input, mapping them to individual voices.
+         */
+        class MultiTouchManager {
+            constructor(element, thereminInstance) {
+                this.element = element;
+                this.theremin = thereminInstance;
+                this.activeTouches = new Map(); // touchId -> touchData (including x, y, pressure, etc.)
+                this.unisonProcessor = new UnisonProcessor(); // Instance of UnisonProcessor
+            }
+
+            /**
+             * Handles the start of a touch or mouse event.
+             * @param {Event} e The touchstart or mousedown event.
+             */
+            handleStart(e) {
+                if (!this.theremin.audioContext || this.theremin.audioContext.state === 'suspended') {
+                    showMessageBox('Please click "Start Audio" first to enable sound.');
+                    return;
+                }
+                
+                // Allow live input during playback
+                // No unconditional stopPlayback() here.
+
+                this.theremin.isPlaying = true; // Indicate live playing
+                this.theremin.touchIndicator.style.opacity = '1';
+
+                const touches = e.touches ? Array.from(e.touches) : [e]; // Normalize to an array of touches/mouse events
+
+                touches.forEach(touch => {
+                    const id = touch.identifier !== undefined ? touch.identifier : 'mouse'; // Use 'mouse' for mouse events
+                    if (this.activeTouches.has(id)) return; // Already tracking this touch/mouse
+
+                    const touchData = this.processInputData(touch);
+                    this.activeTouches.set(id, touchData);
+                    
+                    // Allocate a voice for this specific touch
+                    this.allocateAndPlayVoice(id, touchData);
+
+                    // If recording, record this initial state
+                    if (this.theremin.playbackManager.isRecording) { // Access via playbackManager
+                        if (this.theremin.playbackManager.currentRecording.length === 0) {
+                            this.theremin.playbackManager.recordingStartTime = Date.now();
+                        }
+                        this.theremin.playbackManager.recordCurrentState(touchData.x, touchData.y, touchData.pressure, false);
+                    }
+                });
+                this.theremin._displayUpdateThrottle(); // Update display after new touches
+            }
+
+            /**
+             * Handles touch or mouse movement.
+             * @param {Event} e The touchmove or mousemove event.
+             */
+            handleMove(e) {
+                // For mouse, only process if mouse button is down on theremin area
+                if (!this.theremin.audioContext || !this.theremin.isPlaying || (e.type === 'mousemove' && this.element.dataset.mouseDown !== 'true')) return; 
+                
+                const touches = e.touches ? Array.from(e.touches) : [e];
+
+                touches.forEach(touch => {
+                    const id = touch.identifier !== undefined ? touch.identifier : 'mouse';
+                    if (!this.activeTouches.has(id)) return; // Only update tracked touches/mouse
+
+                    const touchData = this.processInputData(touch);
+                    this.activeTouches.set(id, touchData);
+                    
+                    // Update the corresponding voice
+                    this.updatePlayingVoice(id, touchData);
+
+                    // Detect gestures based on primary touch/mouse
+                    if (id === (e.touches ? e.touches[0].identifier : 'mouse')) {
+                        this.theremin.lastTouchY = touch.clientY;
+                        this.theremin.lastTouchTime = Date.now();
+                        this.theremin.touchHistory.push({y: touch.clientY, time: Date.now()});
+                        if (this.theremin.touchHistory.length > 10) {
+                            this.theremin.touchHistory.shift();
+                        }
+                        this.theremin.detectGestures();
+                    }
+
+                    // If recording, record this state
+                    if (this.theremin.playbackManager.isRecording) { // Access via playbackManager
+                        this.theremin.playbackManager.recordCurrentState(touchData.x, touchData.y, touchData.pressure, false);
+                    }
+                });
+                this.theremin._displayUpdateThrottle(); // Update display after movements
+            }
+
+            /**
+             * Handles the end of a touch or mouse event.
+             * @param {Event} e The touchend or mouseup event.
+             */
+            handleEnd(e) {
+                const touches = e.changedTouches ? Array.from(e.changedTouches) : [e]; // Use changedTouches for touch end
+
+                touches.forEach(touch => {
+                    const id = touch.identifier !== undefined ? touch.identifier : 'mouse';
+                    if (!this.activeTouches.has(id)) return; // Only release tracked touches/mouse
+
+                    this.theremin.voiceManager.releaseVoice(id);
+                    this.activeTouches.delete(id);
+
+                    // If recording, record release event
+                    if (this.theremin.playbackManager.isRecording) { // Access via playbackManager
+                        const lastRecorded = this.theremin.playbackManager.currentRecording[this.theremin.playbackManager.currentRecording.length - 1];
+                        if (lastRecorded) {
+                            this.theremin.playbackManager.recordCurrentState(lastRecorded.x, lastRecorded.y, 0, true); // Pressure 0 for release
+                        }
+                    }
+                });
+
+                // If no more active touches/mouse, stop global sound (if not playing back)
+                if (this.activeTouches.size === 0 && !this.theremin.playbackManager.isPlayingBack) { // Access via playbackManager
+                    this.theremin.stopSound();
+                }
+                this.theremin._displayUpdateThrottle(); // Update display after releases
+            }
+
+            /**
+             * Processes raw touch/mouse event data into a normalized format.
+             * @param {Touch|MouseEvent} input The raw touch or mouse event object.
+             * @returns {object} Normalized touch data.
+             */
+            processInputData(input) {
+                const rect = this.element.getBoundingClientRect();
+                let clientX, clientY, force = 0.5, radiusX = 10, radiusY = 10;
+
+                if (input.touches && input.touches.length > 0) { // Touch event
+                    clientX = input.touches[0].clientX;
+                    clientY = input.touches[0].clientY;
+                    force = input.touches[0].force !== undefined ? input.touches[0].force : 0.5;
+                    radiusX = input.touches[0].radiusX !== undefined ? input.touches[0].radiusX : 10;
+                    radiusY = input.touches[0].radiusY !== undefined ? input.touches[0].radiusY : 10;
+                } else { // Mouse event
+                    clientX = input.clientX;
+                    clientY = input.clientY;
+                    // Simulate force/radius for mouse using modifier keys
+                    if (input.shiftKey) force += 0.5;
+                    if (input.ctrlKey) force += 0.5;
+                    if (input.altKey) force += 0.5;
+                }
+
+                const x = clientX - rect.left;
+                const y = clientY - rect.top;
+
+                // Calculate pressure multiplier based on force/radius and number of active touches
+                let pressureMultiplier = 1;
+                if (input.touches && input.touches.length > 0) {
+                    pressureMultiplier = input.touches.length; // Direct mapping of fingers to voices
+                    pressureMultiplier += force * 0.5; // Add force as a subtle pressure factor
+                } else { // Mouse
+                    pressureMultiplier += force * 0.5;
+                }
+                pressureMultiplier = Math.min(pressureMultiplier, this.theremin.maxUnison); // Cap at max voices
+
+                return {
+                    id: input.identifier !== undefined ? input.identifier : 'mouse',
+                    x: x,
+                    y: y,
+                    pressure: pressureMultiplier,
+                    force: force,
+                    radiusX: radiusX,
+                    radiusY: radiusY,
+                    timestamp: Date.now()
+                };
+            }
+
+            /**
+             * Allocates a voice and starts playing it based on touch data, using logarithmic frequency and exponential volume.
+             * @param {any} id The unique ID for the voice.
+             * @param {object} touchData Normalized touch data.
+             */
+            allocateAndPlayVoice(id, touchData) {
+                const rect = this.element.getBoundingClientRect();
+                const normalizedX = Math.max(0, Math.min(1, touchData.x / rect.width));
+                const normalizedY = Math.max(0, Math.min(1, 1 - (touchData.y / rect.height))); // Invert Y for volume (top=loud, bottom=quiet)
+
+                // Logarithmic frequency mapping
+                const baseFrequency = mapRangeLog(normalizedX, 0, 1, this.theremin.minFreq, this.theremin.maxFreq);
+                
+                // Exponential volume mapping
+                const individualVoiceVolume = (Math.pow(normalizedY, 2) * 0.4) / Math.sqrt(this.activeTouches.size); 
+
+                // Calculate voice parameters using UnisonProcessor
+                const voiceParams = this.unisonProcessor.calculateVoiceParameters(
+                    baseFrequency, 
+                    Array.from(this.activeTouches.keys()).indexOf(id), // Index of current touch
+                    this.activeTouches.size, // Total active touches
+                    this.theremin.unisonSpread * 10, // Scale spread amount (0-100)
+                    'centered' // Default spread mode
+                );
+
+                this.theremin.voiceManager.allocateVoice(
+                    id, 
+                    voiceParams.frequency, 
+                    individualVoiceVolume, 
+                    voiceParams.pan, 
+                    this.theremin.currentWaveType,
+                    true // This is a live input voice
+                );
+                // Update global pressure for display
+                this.theremin.pressureMultiplier = this.activeTouches.size;
+
+                this.updateVisualFeedback(touchData.x, touchData.y, this.activeTouches.size);
+            }
+
+            /**
+             * Updates a playing voice's parameters based on touch data, using logarithmic frequency and exponential volume.
+             * @param {any} id The unique ID for the voice.
+             * @param {object} touchData Normalized touch data.
+             */
+            updatePlayingVoice(id, touchData) {
+                const rect = this.element.getBoundingClientRect();
+                const normalizedX = Math.max(0, Math.min(1, touchData.x / rect.width));
+                const normalizedY = Math.max(0, Math.min(1, 1 - (touchData.y / rect.height))); // Invert Y for volume (top=loud, bottom=quiet)
+
+                // Logarithmic frequency mapping
+                const baseFrequency = mapRangeLog(normalizedX, 0, 1, this.theremin.minFreq, this.theremin.maxFreq);
+                
+                // Exponential volume mapping
+                const individualVoiceVolume = (Math.pow(normalizedY, 2) * 0.4) / Math.sqrt(this.activeTouches.size);
+
+                const voiceParams = this.unisonProcessor.calculateVoiceParameters(
+                    baseFrequency, 
+                    Array.from(this.activeTouches.keys()).indexOf(id), 
+                    this.activeTouches.size, 
+                    this.theremin.unisonSpread * 10, 
+                    'centered'
+                );
+
+                this.theremin.voiceManager.updateVoice(
+                    id, 
+                    voiceParams.frequency, 
+                    individualVoiceVolume, 
+                    voiceParams.pan, 
+                    this.theremin.currentWaveType
+                );
+                // Update global pressure for display
+                this.theremin.pressureMultiplier = this.activeTouches.size;
+
+                this.updateVisualFeedback(touchData.x, touchData.y, this.activeTouches.size);
+            }
+
+            /**
+             * Updates the visual indicator based on the primary touch/mouse.
+             * @param {number} x X coordinate.
+             * @param {number} y Y coordinate.
+             * @param {number} activeTouchCount Number of active touches.
+             */
+            updateVisualFeedback(x, y, activeTouchCount) {
+                // Update currentFreq and currentVolume for display based on the primary touch's position
+                const rect = this.element.getBoundingClientRect();
+                const normalizedX = Math.max(0, Math.min(1, x / rect.width));
+                const normalizedY = Math.max(0, Math.min(1, 1 - (y / rect.height)));
+
+                this.theremin.currentFreq = mapRangeLog(normalizedX, 0, 1, this.theremin.minFreq, this.theremin.maxFreq);
+                this.theremin.currentVolume = Math.pow(normalizedY, 2) * 0.4;
+
+                const indicatorSize = 20 + (activeTouchCount - 1) * 10;
+                this.theremin.touchIndicator.style.width = indicatorSize + 'px';
+                this.theremin.touchIndicator.style.height = indicatorSize + 'px';
+                this.theremin.touchIndicator.style.left = x + 'px';
+                this.theremin.touchIndicator.style.top = y + 'px';
+
+                let indicatorColor = 'var(--touch-indicator-color-base)';
+                let indicatorGlow = 'var(--touch-indicator-glow-base)';
+                const glowIntensity = Math.min(activeTouchCount / this.theremin.maxUnison, 1);
+
+                // Check active effects from AudioEffectsManager
+                const activeEffects = this.theremin.audioEffectsManager.effectChain.map(e => e.name);
+
+                if (activeEffects.includes('Echo')) {
+                    indicatorColor = 'var(--touch-indicator-color-echo)';
+                    indicatorGlow = 'var(--touch-indicator-glow-echo)';
+                } else if (activeEffects.includes('Reverb')) {
+                    indicatorColor = 'var(--touch-indicator-color-reverb)';
+                    indicatorGlow = 'var(--touch-indicator-glow-reverb)';
+                } 
+                // Add more conditions for other effects if they have distinct visual feedback
+
+                this.theremin.touchIndicator.style.background = `radial-gradient(circle, ${indicatorColor} 0%, ${indicatorColor.replace(/0\.\d+/, '0.2')} 70%, transparent 100%)`;
+                this.theremin.touchIndicator.style.boxShadow = `0 0 ${30 + glowIntensity * 50}px ${indicatorGlow}`;
+            }
+        }
+
+        /**
+         * PlaybackManager Class: Manages recording, saving, loading, and playing back melodies.
+         */
+        class PlaybackManager {
+            constructor(thereminInstance) {
+                this.theremin = thereminInstance;
+                this.isRecording = false;
+                this.isPlayingBack = false;
+                this.isLooping = false;
+                this.currentRecording = [];
+                this.savedMelodies = [];
+                this.playbackIndex = 0;
+                this.playbackTimer = null;
+                this.recordingStartTime = 0;
+
+                this.theremin.recordToggleBtn.addEventListener('click', () => this.toggleRecording());
+                this.theremin.playbackToggleBtn.addEventListener('click', () => this.togglePlayback());
+                this.theremin.clearPathBtn.addEventListener('click', () => this.clearPath());
+                this.theremin.loopToggleBtn.addEventListener('click', () => this.toggleLoop());
+                this.theremin.uploadMelodyInput.addEventListener('change', (e) => this.handleFileUpload(e));
+                this.theremin.downloadMelodiesBtn.addEventListener('click', () => this.downloadMelodies());
+
+                this.loadSavedMelodies();
+            }
+
+            /**
+             * Records the current state (position, pressure, volume, wave type, effects) into the current recording.
+             * @param {number} x X coordinate relative to theremin area.
+             * @param {number} y Y coordinate relative to theremin area.
+             * @param {number} pressure The pressure multiplier at this point.
+             * @param {boolean} isRelease If true, indicates a release event (volume/pressure 0).
+             */
+            recordCurrentState(x, y, pressure, isRelease = false) {
+                const timestamp = Date.now() - this.recordingStartTime;
+
+                const lastPoint = this.currentRecording[this.currentRecording.length - 1];
+                // Adaptive sampling: increase thresholds for less frequent recording
+                const minDistance = 5; // pixels
+                const minTime = 50; // ms
+                
+                // Get current effect states and parameters
+                const currentEffectState = this.theremin.audioEffectsManager.getAllEffectsState();
+
+                if (lastPoint && !isRelease && 
+                    (Math.abs(x - lastPoint.x) < minDistance && Math.abs(y - lastPoint.y) < minDistance) &&
+                    (timestamp - lastPoint.timestamp < minTime) &&
+                    (pressure === lastPoint.pressure) &&
+                    (this.theremin.currentWaveType === lastPoint.waveType) &&
+                    // Deep compare effect states
+                    JSON.stringify(currentEffectState) === JSON.stringify(lastPoint.effects) 
+                ) {
+                    return;
+                }
+
+                this.currentRecording.push({
+                    x: x,
+                    y: y,
+                    pressure: isRelease ? 0 : pressure,
+                    volume: isRelease ? 0 : this.theremin.currentVolume, // Use current actual volume
+                    timestamp: timestamp,
+                    waveType: this.theremin.currentWaveType,
+                    effects: currentEffectState, // Save all effect states
+                    minFreq: this.theremin.minFreq, // Store settings with recording
+                    maxFreq: this.theremin.maxFreq,
+                    unisonCount: this.theremin.maxUnison,
+                    unisonSpread: this.theremin.unisonSpread
+                });
+                this.theremin.addPathPoint(x, y, this.theremin.currentVolume);
+            }
+
+            /**
+             * Toggles the recording state.
+             */
+            toggleRecording() {
+                if (!this.theremin.audioContext) {
+                    showMessageBox('Please start audio first.');
+                    return;
+                }
+
+                if (this.isPlayingBack) {
+                    showMessageBox('Please stop playback first.');
+                    return;
+                }
+
+                this.isRecording = !this.isRecording;
+                
+                this.theremin.recordToggleBtn.setAttribute('aria-pressed', this.isRecording);
+
+                if (this.isRecording) {
+                    this.currentRecording = [];
+                    this.theremin.pathPoints = [];
+                    this.theremin.clearPathVisualization();
+                    this.recordingStartTime = Date.now();
+                    this.theremin.recordToggleBtn.textContent = '⏹ Stop';
+                    this.theremin.recordToggleBtn.classList.add('recording');
+                    this.theremin.recordToggleBtn.classList.remove('has-recording');
+                    showMessageBox('Recording started! Play your melody.');
+                } else {
+                    this.theremin.recordToggleBtn.textContent = '● Record';
+                    this.theremin.recordToggleBtn.classList.remove('recording');
+                    if (this.currentRecording.length > 0) {
+                        const lastPoint = this.currentRecording[this.currentRecording.length - 1];
+                        if (lastPoint && lastPoint.pressure > 0.001) { // Check pressure instead of volume for release
+                            this.recordCurrentState(lastPoint.x, lastPoint.y, 0, true); // Pressure 0 for release
+                        }
+                        this.saveCurrentRecording();
+                        showMessageBox(`Melody recorded! ${this.currentRecording.length} points captured.`);
+                    } else {
+                        showMessageBox('No melody data recorded.');
+                    }
+                }
+                this.theremin._displayUpdateThrottle();
+            }
+
+            /**
+             * Saves the current recording to the list of saved melodies and localStorage.
+             */
+            saveCurrentRecording() {
+                if (this.currentRecording.length === 0) return;
+                
+                // For simplicity, we'll use a default name. A custom modal for input would be ideal here.
+                const melodyName = `Melody ${this.savedMelodies.length + 1}`; 
+
+                const melody = {
+                    id: Date.now(),
+                    name: melodyName,
+                    data: [...this.currentRecording],
+                    duration: this.currentRecording[this.currentRecording.length - 1]?.timestamp || 0,
+                    // Save current theremin settings as initial settings for playback
+                    initialWaveType: this.theremin.currentWaveType, 
+                    initialMinFreq: this.theremin.minFreq,
+                    initialMaxFreq: this.theremin.maxFreq,
+                    initialUnisonCount: this.theremin.maxUnison,
+                    initialUnisonSpread: this.theremin.unisonSpread,
+                    initialEffects: this.theremin.audioEffectsManager.getAllEffectsState() // Save all effect states
+                };
+                
+                this.savedMelodies.push(melody);
+                this.saveMelodiesToStorage();
+                this.updateMelodyList();
+                
+                this.theremin.recordToggleBtn.classList.add('has-recording');
+            }
+
+            /**
+             * Toggles playback of the current recording.
+             */
+            togglePlayback() {
+                if (!this.theremin.audioContext) {
+                    showMessageBox('Please start audio first.');
+                    return;
+                }
+
+                if (this.isRecording) {
+                    showMessageBox('Please stop recording first.');
+                    return;
+                }
+
+                if (this.currentRecording.length === 0) {
+                    showMessageBox('No melody loaded. Record or load one first!');
+                    return;
+                }
+
+                if (this.isPlayingBack) {
+                    this.stopPlayback();
+                } else {
+                    this.startPlayback();
+                }
+            }
+
+            /**
+             * Starts playback of the current recording.
+             */
+            startPlayback() {
+                if (this.currentRecording.length === 0) return;
+                
+                if (!this.theremin.voiceManager) { // Ensure voiceManager is initialized
+                    showMessageBox('Audio system not ready. Please start audio first.');
+                    return;
+                }
+
+                this.isPlayingBack = true;
+                this.playbackIndex = 0;
+                
+                this.theremin.playbackToggleBtn.textContent = '⏸ Stop';
+                this.theremin.playbackToggleBtn.classList.add('playing'); // Use 'playing' class
+                this.theremin.playbackToggleBtn.setAttribute('aria-pressed', true);
+                
+                this.theremin.clearPathVisualization();
+                
+                // Ensure oscillators are ready for playback, based on the melody's initial unison count
+                // We ensure enough voices are available, but don't stop live playing.
+                // Re-initialize voice pool to ensure it matches the maxUnison of the loaded melody if different
+                this.theremin.voiceManager.initializeVoicePool(this.theremin.maxUnison, this.theremin.audioEffectsManager.inputNode); 
+                this.theremin.isPlaying = true; // Indicate playback is active
+                this.playbackLoop();
+                this.theremin._displayUpdateThrottle();
+            }
+
+            /**
+             * Stops playback.
+             */
+            stopPlayback() {
+                this.isPlayingBack = false;
+                if (this.playbackTimer) {
+                    clearTimeout(this.playbackTimer);
+                    this.playbackTimer = null;
+                }
+                
+                // Release all voices that were specifically allocated for playback
+                this.theremin.voiceManager?.voicePool.forEach(voice => { // Added optional chaining
+                    if (!voice.isLive && voice.isActive) { // If it's a playback voice and active
+                        this.theremin.voiceManager.releaseVoice(voice.touchId);
+                    }
+                });
+
+                // If no live touches are active, stop global sound
+                if (this.theremin.multiTouchManager?.activeTouches.size === 0) { // Added optional chaining
+                    this.theremin.stopSound(); 
+                }
+                
+                this.theremin.playbackToggleBtn.textContent = '▶ Play';
+                this.theremin.playbackToggleBtn.classList.remove('playing'); // Remove 'playing' class
+                this.theremin.playbackToggleBtn.setAttribute('aria-pressed', false);
+                
+                this.theremin._displayUpdateThrottle();
+                
+                if (this.isLooping && this.currentRecording.length > 0) {
+                    setTimeout(() => this.startPlayback(), 500);
+                }
+            }
+
+            /**
+             * The main loop for playing back recorded points.
+             */
+            playbackLoop() {
+                if (!this.isPlayingBack || this.playbackIndex >= this.currentRecording.length) {
+                    this.stopPlayback();
+                    return;
+                }
+
+                const point = this.currentRecording[this.playbackIndex];
+                
+                // Restore settings from recorded point
+                this.theremin.setWaveType(point.waveType + 'Wave');
+                this.theremin.minFreq = point.minFreq;
+                document.getElementById('minFreq').value = point.minFreq;
+                this.theremin.maxFreq = point.maxFreq;
+                document.getElementById('maxFreq').value = point.maxFreq;
+                this.theremin.maxUnison = point.unisonCount;
+                document.getElementById('unisonCount').value = point.unisonCount;
+                document.getElementById('unisonDisplay').textContent = point.unisonCount;
+                this.theremin.unisonSpread = point.unisonSpread;
+                document.getElementById('unisonSpread').value = point.unisonSpread * 100;
+                document.getElementById('spreadDisplay').textContent = `${(point.unisonSpread * 100).toFixed(0)}%`;
+
+                // Restore all effect states
+                this.theremin.audioEffectsManager.setAllEffectsState(point.effects);
+                // Update UI for effect buttons and parameters
+                this.theremin.updateEffectUI();
+                this.theremin.effectIntensity = point.effects.Echo?.mix || point.effects.Reverb?.mix || 0.5; // Default to 0.5 if no echo/reverb
+                document.getElementById('effectMix').value = this.theremin.effectIntensity * 100;
+                document.getElementById('mixDisplay').textContent = `${(this.theremin.effectIntensity * 100).toFixed(0)}%`;
+
+
+                // Allocate/update voice for playback
+                const rect = this.theremin.thereminArea.getBoundingClientRect();
+                const normalizedX = Math.max(0, Math.min(1, point.x / rect.width));
+                const normalizedY = Math.max(0, Math.min(1, 1 - (point.y / rect.height)));
+
+                // Logarithmic frequency mapping for playback
+                const baseFrequency = mapRangeLog(normalizedX, 0, 1, this.theremin.minFreq, this.theremin.maxFreq);
+                
+                // Exponential volume mapping for playback
+                // Fix: Ensure individualVoiceVolume is finite, especially when point.pressure is 0
+                const individualVoiceVolume = point.pressure > 0 ? (Math.pow(normalizedY, 2) * 0.4) / Math.sqrt(point.pressure) : 0;
+
+                const voiceParams = this.theremin.unisonProcessor.calculateVoiceParameters(
+                    baseFrequency, 
+                    0, // For playback, treat as a single voice for unison calculation
+                    Math.ceil(point.pressure), // Use recorded pressure as total voices for unison
+                    point.unisonSpread * 10, 
+                    'centered'
+                );
+
+                // Use a unique ID for playback, e.g., 'playback-voice-0'
+                const playbackVoiceId = 'playback-voice-0'; 
+                if (!this.theremin.voiceManager.activeVoices.has(playbackVoiceId)) {
+                    this.theremin.voiceManager.allocateVoice(
+                        playbackVoiceId, 
+                        voiceParams.frequency, 
+                        individualVoiceVolume, 
+                        voiceParams.pan, 
+                        point.waveType,
+                        false // This is a playback voice
+                    );
+                } else {
+                    this.theremin.voiceManager.updateVoice(
+                        playbackVoiceId, 
+                        voiceParams.frequency, 
+                        individualVoiceVolume, 
+                        voiceParams.pan, 
+                        point.waveType
+                    );
+                }
+                
+                // Update theremin's global state for display purposes during playback
+                this.theremin.currentFreq = baseFrequency;
+                this.theremin.currentVolume = point.volume;
+                this.theremin.pressureMultiplier = point.pressure; // Reflect recorded pressure
+                
+                this.theremin.updatePathVisualization(); // Update path visualization
+                this.theremin._displayUpdateThrottle();
+                
+                this.playbackIndex++;
+                
+                if (this.playbackIndex < this.currentRecording.length) {
+                    const nextPoint = this.currentRecording[this.playbackIndex];
+                    const delay = nextPoint.timestamp - point.timestamp;
+                    this.playbackTimer = setTimeout(() => this.playbackLoop(), Math.max(10, delay));
+                } else {
+                    this.stopPlayback();
+                }
+            }
+
+            /**
+             * Toggles the looping state for playback.
+             */
+            toggleLoop() {
+                this.isLooping = !this.isLooping;
+                
+                this.theremin.loopToggleBtn.setAttribute('aria-pressed', this.isLooping);
+
+                if (this.isLooping) {
+                    this.theremin.loopToggleBtn.classList.add('active');
+                    this.theremin.loopToggleBtn.textContent = '🔄 Loop ON';
+                    showMessageBox('Loop mode enabled');
+                    if (this.isPlayingBack && !this.playbackTimer) {
+                        this.startPlayback(); // Restart playback if already playing and loop was just enabled
+                    }
+                } else {
+                    this.theremin.loopToggleBtn.classList.remove('active');
+                    this.theremin.loopToggleBtn.textContent = '🔄 Loop';
+                    showMessageBox('Loop mode disabled');
+                }
+                this.theremin._displayUpdateThrottle();
+            }
+
+            /**
+             * Clears the current recording and its visualization.
+             */
+            clearPath() {
+                this.currentRecording = [];
+                this.theremin.pathPoints = [];
+                this.theremin.clearPathVisualization();
+                this.stopPlayback();
+                
+                this.theremin.recordToggleBtn.classList.remove('has-recording');
+                
+                showMessageBox('Current melody cleared.');
+                this.theremin._displayUpdateThrottle();
+            }
+
+            /**
+             * Saves all saved melodies to localStorage.
+             */
+            saveMelodiesToStorage() {
+                try {
+                    localStorage.setItem('thereminMelodies', JSON.stringify(this.savedMelodies));
+                    console.log('Melodies saved to localStorage.');
+                } catch (e) {
+                    console.error('Failed to save melodies to localStorage:', e);
+                    showMessageBox('Failed to save melodies. Storage might be full.');
+                }
+            }
+
+            /**
+             * Loads melodies from localStorage on initialization.
+             */
+            loadSavedMelodies() {
+                try {
+                    const storedMelodies = localStorage.getItem('thereminMelodies');
+                    if (storedMelodies) {
+                        this.savedMelodies = JSON.parse(storedMelodies);
+                        this.updateMelodyList();
+                        console.log('Melodies loaded from localStorage.');
+                        // Do NOT automatically load and play on startup.
+                        // User must click "Start Audio" then "Play".
+                        // if (this.savedMelodies.length > 0) {
+                        //     this.loadMelody(this.savedMelodies[0].id);
+                        // }
+                    }
+                } catch (e) {
+                    console.error('Failed to load melodies from localStorage:', e);
+                    showMessageBox('Failed to load melodies. Data might be corrupted.');
+                }
+            }
+
+            /**
+             * Updates the list of saved melodies displayed in the UI.
+             */
+            updateMelodyList() {
+                this.theremin.melodyListDiv.innerHTML = '<div class="list-header">Saved Melodies:</div>';
+                
+                if (this.savedMelodies.length === 0) {
+                    this.theremin.melodyListDiv.style.display = 'none';
+                    return;
+                }
+                this.theremin.melodyListDiv.style.display = 'block';
+
+                this.savedMelodies.forEach(melody => {
+                    const melodyItem = document.createElement('div');
+                    melodyItem.classList.add('melody-item');
+                    melodyItem.dataset.id = melody.id;
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.classList.add('melody-name');
+                    nameSpan.textContent = melody.name;
+                    melodyItem.appendChild(nameSpan);
+
+                    const playBtn = document.createElement('button');
+                    playBtn.textContent = 'Play';
+                    playBtn.setAttribute('aria-label', `Play ${melody.name}`);
+                    playBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent loading melody on button click
+                        this.loadMelody(melody.id);
+                        this.startPlayback();
+                    });
+                    melodyItem.appendChild(playBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Del';
+                    deleteBtn.setAttribute('aria-label', `Delete ${melody.name}`);
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent loading melody on button click
+                        // Use showMessageBox instead of confirm()
+                        showMessageBox(`Are you sure you want to delete "${melody.name}"? Click again to confirm.`, 3000);
+                        // A simple double-click or a custom modal with "Yes/No" would be better for confirmation
+                        e.target.dataset.confirmDelete = e.target.dataset.confirmDelete === 'true' ? 'false' : 'true';
+                        if (e.target.dataset.confirmDelete === 'true') {
+                            setTimeout(() => {
+                                if (e.target.dataset.confirmDelete === 'true') { // If not clicked again
+                                    e.target.dataset.confirmDelete = 'false';
+                                }
+                            }, 3000); // Reset after 3 seconds if no second click
+                        } else {
+                            this.deleteMelody(melody.id);
+                        }
+                    });
+                    melodyItem.appendChild(deleteBtn);
+
+                    melodyItem.addEventListener('click', () => {
+                        this.loadMelody(melody.id);
+                        showMessageBox(`Loaded: ${melody.name}`);
+                    });
+
+                    this.theremin.melodyListDiv.appendChild(melodyItem);
+                });
+            }
+
+            /**
+             * Loads a specific melody from savedMelodies into currentRecording.
+             * @param {number} melodyId The ID of the melody to load.
+             */
+            loadMelody(melodyId) {
+                const melody = this.savedMelodies.find(m => m.id === melodyId);
+                if (melody) {
+                    this.stopPlayback();
+                    this.currentRecording = [...melody.data];
+                    this.theremin.pathPoints = [...melody.data];
+                    this.theremin.clearPathVisualization();
+                    this.theremin.updatePathVisualization();
+
+                    // Restore initial settings from the loaded melody
+                    this.theremin.setWaveType(melody.initialWaveType + 'Wave');
+                    this.theremin.minFreq = melody.initialMinFreq;
+                    document.getElementById('minFreq').value = melody.initialMinFreq;
+                    this.theremin.maxFreq = melody.initialMaxFreq;
+                    document.getElementById('maxFreq').value = melody.initialMaxFreq;
+                    this.theremin.maxUnison = melody.initialUnisonCount;
+                    document.getElementById('unisonCount').value = melody.initialUnisonCount;
+                    document.getElementById('unisonDisplay').textContent = melody.initialUnisonCount;
+                    this.theremin.unisonSpread = melody.initialUnisonSpread;
+                    document.getElementById('unisonSpread').value = melody.initialUnisonSpread * 100;
+                    document.getElementById('spreadDisplay').textContent = `${(melody.initialUnisonSpread * 100).toFixed(0)}%`;
+
+                    // Restore all effect states
+                    this.theremin.audioEffectsManager.setAllEffectsState(melody.initialEffects);
+                    this.theremin.updateEffectUI(); // Update UI for effect buttons and parameters
+
+                    this.theremin.recordToggleBtn.classList.add('has-recording');
+                    this.theremin._displayUpdateThrottle();
+                    showMessageBox(`Melody "${melody.name}" loaded.`);
+                } else {
+                    showMessageBox('Melody not found.');
+                }
+            }
+
+            /**
+             * Deletes a melody from savedMelodies and localStorage.
+             * @param {number} melodyId The ID of the melody to delete.
+             */
+            deleteMelody(melodyId) {
+                this.savedMelodies = this.savedMelodies.filter(m => m.id !== melodyId);
+                this.saveMelodiesToStorage();
+                this.updateMelodyList();
+                showMessageBox('Melody deleted.');
+                if (this.currentRecording.length === 0 && this.savedMelodies.length === 0) {
+                    this.theremin.recordToggleBtn.classList.remove('has-recording');
+                }
+            }
+
+            /**
+             * Handles file upload for loading melodies from a JSON file.
+             * @param {Event} event The file input change event.
+             */
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+                if (file.type !== 'application/json') {
+                    showMessageBox('Please upload a JSON file.');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const loadedData = JSON.parse(e.target.result);
+                        if (Array.isArray(loadedData) && loadedData.every(m => m.id && m.name && m.data && Array.isArray(m.data))) {
+                            const newMelodies = loadedData.filter(
+                                newMelody => !this.savedMelodies.some(existingMelody => existingMelody.id === newMelody.id)
+                            );
+                            this.savedMelodies = [...this.savedMelodies, ...newMelodies];
+                            this.saveMelodiesToStorage();
+                            this.updateMelodyList();
+                            showMessageBox(`Loaded ${newMelodies.length} new melodies from file.`);
+                            if (newMelodies.length > 0) {
+                                this.loadMelody(newMelodies[0].id);
+                            }
+                        } else {
+                            showMessageBox('Invalid melody file format. Expected an array of melody objects.');
+                        }
+                    } catch (error) {
+                        console.error('Error parsing JSON file:', error);
+                        showMessageBox('Error reading melody file. Invalid JSON.');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // Clear file input
+            }
+
+            /**
+             * Downloads all saved melodies as a JSON file.
+             */
+            downloadMelodies() {
+                if (this.savedMelodies.length === 0) {
+                    showMessageBox('No melodies to save.');
+                    return;
+                }
+
+                const dataStr = JSON.stringify(this.savedMelodies, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `theremin_melodies_${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessageBox('Melodies saved to file.');
+            }
+        }
+
+
+        /**
+         * EnhancedTouchTheremin Class: The main application class, coordinating all components.
+         */
+        class EnhancedTouchTheremin {
+            constructor() {
+                this.audioContext = null;
+                this.isPlaying = false; // True if any sound is currently being generated (live or playback)
+                this.currentWaveType = 'sine';
+                
+                this.minFreq = 200;
+                this.maxFreq = 1000;
+                this.currentFreq = 0;
+                this.currentVolume = 0;
+                
+                this.maxUnison = 8; // Max voices from slider
+                this.unisonSpread = 0.02; // Initial spread value
+                this.pressureMultiplier = 1; // Reflects active touches/voices for display
+                
+                // Effect states (now managed by AudioEffectsManager, but kept here for initial UI state)
+                this.isEcho = false; // Corresponds to 'Echo' effect
+                this.isReverb = false; // Corresponds to 'Reverb' effect
+                this.effectIntensity = 0.5; // Global mix for effects (can be per-effect later)
+                
+                this.lastTouchY = 0; // For gesture detection
+                this.touchVelocityY = 0;
+                this.lastTouchTime = 0;
+                this.touchHistory = [];
+                
+                this.pathPoints = [];
+                this.maxPathPoints = 500;
+                
+                // UI Elements
+                this.thereminArea = document.getElementById('thereminArea');
+                this.touchIndicator = document.getElementById('touchIndicator');
+                this.melodyPathSvg = document.getElementById('melodyPath');
+                this.freqDisplay = document.getElementById('freqDisplay');
+                this.volumeDisplay = document.getElementById('volumeDisplay');
+                this.pressureDisplay = document.getElementById('pressureDisplay');
+                this.activeUnisonDisplay = document.getElementById('activeUnison');
+                this.effectDisplay = document.getElementById('effectDisplay');
+                this.recordDisplay = document.getElementById('recordDisplay');
+                this.startStopBtn = document.getElementById('startStop');
+                this.melodyListDiv = document.getElementById('melodyList');
+                this.audioStatusDiv = document.getElementById('audioStatus'); 
+                this.effectControlsPanel = document.getElementById('effectControlsPanel');
+                this.resetSettingsBtn = document.getElementById('resetSettings');
+                
+                this.recordToggleBtn = document.getElementById('recordToggle');
+                this.playbackToggleBtn = document.getElementById('playbackToggle');
+                this.clearPathBtn = document.getElementById('clearPath');
+                this.loopToggleBtn = document.getElementById('loopToggle');
+                this.uploadMelodyInput = document.getElementById('uploadMelody');
+                this.downloadMelodiesBtn = document.getElementById('downloadMelodies');
+
+                // Panel elements for minimizing
+                this.infoPanel = document.getElementById('infoPanel');
+                this.instructionsPanel = document.getElementById('instructionsPanel');
+
+                // Instantiate sub-managers (initialized to null, created with audioContext)
+                this.voiceManager = null; 
+                this.unisonProcessor = new UnisonProcessor(); 
+                this.multiTouchManager = null; 
+                this.playbackManager = null; 
+                this.audioEffectsManager = null; // New: AudioEffectsManager instance
+
+                // Throttled display update for performance
+                this._displayUpdateThrottle = this._throttle(this._updateDisplayInternal.bind(this), 16); // ~60fps
+
+                this.setupEventListeners();
+                this.setupCanvas();
+                this.updateEffectUI(); // Initial UI update for effects
+                
+                // Set initial slider values from properties
+                this.resetUIControls(); // Call this to set initial UI state
+                
+                this.showWelcomeMessage(); // Show welcome message on first visit
+            }
+
+            /**
+             * Utility function to throttle function calls.
+             * @param {Function} func The function to throttle.
+             * @param {number} delay The minimum delay in milliseconds between executions.
+             * @returns {Function} The throttled function.
+             */
+            _throttle(func, delay) {
+                let timeoutId;
+                let lastExecTime = 0;
+                return function (...args) {
+                    const currentTime = Date.now();
+                    if (currentTime - lastExecTime > delay) {
+                        func.apply(this, args);
+                        lastExecTime = currentTime;
+                    } else {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => {
+                            func.apply(this, args);
+                            lastExecTime = Date.now();
+                        }, delay - (currentTime - lastExecTime));
+                    }
+                };
+            }
+
+            /**
+             * Safely performs an asynchronous audio operation.
+             * @param {Function} operation The async function to execute.
+             * @param {string} errorMessage A user-friendly error message.
+             * @returns {Promise<any>} A promise that resolves with the operation's result or null on error.
+             */
+            async _safeAudioOperation(operation, errorMessage) {
+                try {
+                    return await operation();
+                } catch (error) {
+                    console.error(`Audio operation failed: ${errorMessage}`, error);
+                    showMessageBox(`${errorMessage} Please try reloading the page or check browser permissions.`);
+                    return null;
+                }
+            }
+
+            /**
+             * Sets up all event listeners for user interaction.
+             */
+            setupEventListeners() {
+                // Delegate touch/mouse events to MultiTouchManager
+                // These listeners will be active even if multiTouchManager is null initially,
+                // but the handlers themselves will check for its existence.
+                this.thereminArea.addEventListener('touchstart', (e) => this.multiTouchManager?.handleStart(e));
+                this.thereminArea.addEventListener('touchmove', (e) => this.multiTouchManager?.handleMove(e));
+                this.thereminArea.addEventListener('touchend', (e) => this.multiTouchManager?.handleEnd(e));
+                this.thereminArea.addEventListener('touchcancel', (e) => this.multiTouchManager?.handleEnd(e));
+
+                this.thereminArea.addEventListener('mousedown', (e) => {
+                    this.thereminArea.dataset.mouseDown = 'true'; // Set flag for mouse move tracking
+                    this.multiTouchManager?.handleStart(e);
+                });
+                this.thereminArea.addEventListener('mousemove', (e) => this.multiTouchManager?.handleMove(e));
+                this.thereminArea.addEventListener('mouseup', (e) => {
+                    delete this.thereminArea.dataset.mouseDown; // Clear flag
+                    this.multiTouchManager?.handleEnd(e);
+                });
+                this.thereminArea.addEventListener('mouseleave', (e) => {
+                    // If mouse leaves while held down, simulate mouseup to stop sound
+                    if (this.thereminArea.dataset.mouseDown === 'true') {
+                        delete this.thereminArea.dataset.mouseDown;
+                        this.multiTouchManager?.handleEnd(e);
+                    }
+                });
+
+                this.startStopBtn.addEventListener('click', () => this.toggleAudio());
+                
+                document.querySelectorAll('.wave-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.setWaveType(e.target.id));
+                });
+
+                document.getElementById('minFreq').addEventListener('input', (e) => {
+                    this.minFreq = parseInt(e.target.value);
+                    if (this.minFreq > this.maxFreq) {
+                        this.maxFreq = this.minFreq;
+                        document.getElementById('maxFreq').value = this.minFreq;
+                    }
+                    // Update active voices with new frequency range
+                    this.multiTouchManager?.activeTouches.forEach((touchData, id) => {
+                        this.multiTouchManager.updatePlayingVoice(id, touchData);
+                    });
+                    this._displayUpdateThrottle();
+                });
+
+                document.getElementById('maxFreq').addEventListener('input', (e) => {
+                    this.maxFreq = parseInt(e.target.value);
+                    if (this.maxFreq < this.minFreq) {
+                        this.minFreq = this.maxFreq;
+                        document.getElementById('minFreq').value = this.maxFreq;
+                    }
+                    // Update active voices with new frequency range
+                    this.multiTouchManager?.activeTouches.forEach((touchData, id) => {
+                        this.multiTouchManager.updatePlayingVoice(id, touchData);
+                    });
+                    this._displayUpdateThrottle();
+                });
+
+                document.getElementById('unisonCount').addEventListener('input', (e) => {
+                    this.maxUnison = parseInt(e.target.value);
+                    document.getElementById('unisonDisplay').textContent = e.target.value;
+                    // Re-initialize VoiceManager with new max voices, and update active voices
+                    if (this.audioContext && this.voiceManager && this.audioEffectsManager) { 
+                        this.voiceManager.initializeVoicePool(this.maxUnison, this.audioEffectsManager.inputNode);
+                        // Re-apply current sound state to ensure correct voice allocation/gains
+                        this.multiTouchManager?.activeTouches.forEach((touchData, id) => {
+                            this.multiTouchManager.updatePlayingVoice(id, touchData);
+                        });
+                    }
+                    this._displayUpdateThrottle();
+                });
+
+                document.getElementById('unisonSpread').addEventListener('input', (e) => {
+                    this.unisonSpread = parseInt(e.target.value) / 100;
+                    document.getElementById('spreadDisplay').textContent = e.target.value + '%';
+                    // Update active voices with new spread
+                    this.multiTouchManager?.activeTouches.forEach((touchData, id) => {
+                        this.multiTouchManager.updatePlayingVoice(id, touchData);
+                    });
+                    this._displayUpdateThrottle();
+                });
+
+                // Effect toggle buttons
+                document.getElementById('echoToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('Echo');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+                document.getElementById('reverbToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('Reverb');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+                document.getElementById('chorusToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('Chorus');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+                document.getElementById('flangerToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('Flanger');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+                document.getElementById('phaserToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('Phaser');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+                document.getElementById('distortionToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('Distortion');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+                document.getElementById('bitCrusherToggle').addEventListener('click', (e) => {
+                    if (this.audioContext) {
+                        const newState = this.audioEffectsManager.toggleEffect('BitCrusher');
+                        e.target.setAttribute('aria-pressed', newState);
+                        this.updateEffectUI();
+                        this._displayUpdateThrottle();
+                    } else {
+                        showMessageBox('Please start audio first to toggle effects.');
+                    }
+                });
+
+                document.getElementById('effectMix').addEventListener('input', (e) => {
+                    this.effectIntensity = parseInt(e.target.value) / 100;
+                    document.getElementById('mixDisplay').textContent = e.target.value + '%';
+                    // Apply mix to all currently enabled effects
+                    if (this.audioEffectsManager) {
+                        this.audioEffectsManager.effectChain.forEach(effect => {
+                            effect.setMix(this.effectIntensity);
+                        });
+                    }
+                    this._displayUpdateThrottle();
+                });
+
+                this.resetSettingsBtn.addEventListener('click', () => this.resetAllSettings());
+
+                this.setupKeyboardControls(); // Add keyboard controls
+
+                // Panel toggle buttons
+                this.infoPanel.querySelector('.panel-toggle-btn').addEventListener('click', () => this.togglePanel('infoPanel'));
+                this.instructionsPanel.querySelector('.panel-toggle-btn').addEventListener('click', () => this.togglePanel('instructionsPanel'));
+
+                // Make file input label keyboard focusable
+                document.getElementById('uploadMelody').previousElementSibling.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        document.getElementById('uploadMelody').click();
+                    }
+                });
+            }
+
+            /**
+             * Toggles the collapsed state of a UI panel.
+             * @param {string} panelId The ID of the panel to toggle ('infoPanel' or 'instructionsPanel').
+             */
+            togglePanel(panelId) {
+                const panel = document.getElementById(panelId);
+                if (panel) {
+                    panel.classList.toggle('collapsed');
+                    const button = panel.querySelector('.panel-toggle-btn');
+                    if (panel.classList.contains('collapsed')) {
+                        button.textContent = '+'; 
+                        button.setAttribute('aria-label', `Expand ${panelId === 'infoPanel' ? 'Info Panel' : 'Instructions'}`);
+                    } else {
+                        button.textContent = '_'; 
+                        button.setAttribute('aria-label', `Collapse ${panelId === 'infoPanel' ? 'Info Panel' : 'Instructions'}`);
+                    }
+                }
+            }
+
+            /**
+             * Sets up keyboard shortcuts for common actions.
+             */
+            setupKeyboardControls() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // Don't trigger if typing in an input field
+
+                    switch(e.key.toLowerCase()) {
+                        case ' ': // Spacebar to start/stop audio
+                            e.preventDefault();
+                            this.toggleAudio();
+                            break;
+                        case 'r': // R to toggle recording
+                            e.preventDefault();
+                            this.playbackManager?.toggleRecording();
+                            break;
+                        case 'p': // P to toggle playback
+                            e.preventDefault();
+                            this.playbackManager?.togglePlayback();
+                            break;
+                        case 'l': // L to toggle loop
+                            e.preventDefault();
+                            this.playbackManager?.toggleLoop();
+                            break;
+                        case 'c': // C to clear melody
+                            e.preventDefault();
+                            this.playbackManager?.clearPath();
+                            break;
+                        // Add more keyboard shortcuts as needed
+                    }
+                });
+            }
+
+            /**
+             * Toggles the AudioContext state (starts/stops audio processing).
+             */
+            async toggleAudio() {
+                if (!this.audioContext) {
+                    const context = await this._safeAudioOperation(
+                        async () => new (window.AudioContext || window.webkitAudioContext)(),
+                        'Error creating audio context.'
+                    );
+                    if (!context) return;
+                    this.audioContext = context;
+
+                    // Initialize AudioEffectsManager first, as other components depend on its nodes
+                    try {
+                        this.audioEffectsManager = new AudioEffectsManager(this.audioContext);
+                    } catch (error) {
+                        console.error("Failed to initialize AudioEffectsManager:", error);
+                        showMessageBox("Failed to start audio system. Please try again.");
+                        this.audioContext = null; // Reset context if manager fails
+                        return;
+                    }
+                    
+                    // VoiceManager connects to the input of AudioEffectsManager
+                    try {
+                        this.voiceManager = new VoiceManager(this.audioContext, this.maxUnison, this.audioEffectsManager.inputNode);
+                    } catch (error) {
+                        console.error("Failed to initialize VoiceManager:", error);
+                        showMessageBox("Failed to start voice system. Please try again.");
+                        this.audioEffectsManager.dispose(); // Clean up effects manager
+                        this.audioContext = null;
+                        return;
+                    }
+                    
+                    this.multiTouchManager = new MultiTouchManager(this.thereminArea, this);
+                    this.playbackManager = new PlaybackManager(this); 
+
+                    await this._safeAudioOperation(
+                        async () => this.audioContext.resume(),
+                        'Error resuming audio context.'
+                    );
+                    if (this.audioContext.state === 'suspended') {
+                        showMessageBox('Audio context suspended. Please interact with the page to resume.');
+                        this.updateAudioStatus();
+                        return;
+                    }
+
+                    // Rebuild effect chain to ensure initial state is applied
+                    this.audioEffectsManager._rebuildChain(); 
+                    this.startStopBtn.textContent = 'Stop Audio';
+                    this.startStopBtn.classList.add('active');
+                    this.startStopBtn.setAttribute('aria-pressed', true);
+                    showMessageBox('Audio started! Touch to play and record.');
+                } else {
+                    this.stopSound();
+                    this.playbackManager?.stopPlayback(); // Stop playback via manager
+                    await this._safeAudioOperation(
+                        async () => {
+                            // Clean up audio effects manager and its nodes
+                            this.audioEffectsManager?.dispose(); // Use dispose method
+                            this.audioEffectsManager = null;
+
+                            this.voiceManager?.disconnectAllVoices(); // Disconnect all voices
+                            await this.audioContext.close();
+                            this.audioContext = null;
+                            this.voiceManager = null;
+                            this.multiTouchManager = null;
+                            this.playbackManager = null;
+                        },
+                        'Error closing audio context.'
+                    );
+                    this.startStopBtn.textContent = 'Start Audio';
+                    this.startStopBtn.classList.remove('active');
+                    this.startStopBtn.setAttribute('aria-pressed', false);
+                    showMessageBox('Audio stopped.');
+                    this.isPlaying = false; // Global playing state
+                    this.touchIndicator.style.opacity = '0';
+                }
+                this.updateAudioStatus();
+                this._displayUpdateThrottle(); 
+            }
+
+            /**
+             * Resets all application settings and UI to their default state, and clears localStorage.
+             */
+            resetAllSettings() {
+                // Confirm with user (using showMessageBox for now, custom modal is better)
+                showMessageBox('Are you sure you want to reset all settings and clear saved melodies? Click again to confirm.', 4000);
+                this.resetSettingsBtn.dataset.confirmReset = this.resetSettingsBtn.dataset.confirmReset === 'true' ? 'false' : 'true';
+                if (this.resetSettingsBtn.dataset.confirmReset === 'true') {
+                    setTimeout(() => {
+                        if (this.resetSettingsBtn.dataset.confirmReset === 'true') { // If not clicked again
+                            this.resetSettingsBtn.dataset.confirmReset = 'false';
+                        }
+                    }, 4000); // Reset after 4 seconds if no second click
+                } else {
+                    // Stop audio if playing
+                    if (this.audioContext) {
+                        this.toggleAudio(); // This will dispose audio context and managers
+                    }
+
+                    // Clear localStorage
+                    localStorage.clear();
+                    console.log('LocalStorage cleared.');
+                    showMessageBox('All settings and saved melodies cleared. Reloading page...');
+
+                    // Reset internal state variables to defaults
+                    this.currentWaveType = 'sine';
+                    this.minFreq = 200;
+                    this.maxFreq = 1000;
+                    this.maxUnison = 8;
+                    this.unisonSpread = 0.02;
+                    this.effectIntensity = 0.5;
+                    this.pathPoints = [];
+                    this.touchHistory = [];
+
+                    // Reset UI controls to default values
+                    this.resetUIControls();
+
+                    // Re-initialize managers if they exist or will be created on next audio start
+                    if (this.playbackManager) {
+                        this.playbackManager.savedMelodies = [];
+                        this.playbackManager.currentRecording = [];
+                        this.playbackManager.updateMelodyList();
+                    }
+                    this.clearPathVisualization();
+                    this.updateEffectUI(); // Re-render effect UI based on default states
+                    this._displayUpdateThrottle();
+
+                    // Optional: Reload the page to ensure a clean slate
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            }
+
+            /**
+             * Resets all UI controls to their default values.
+             */
+            resetUIControls() {
+                // Wave buttons
+                document.querySelectorAll('.wave-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                document.getElementById('sineWave').classList.add('active');
+                document.getElementById('sineWave').setAttribute('aria-pressed', 'true');
+
+                // Frequency sliders
+                document.getElementById('minFreq').value = 200;
+                document.getElementById('maxFreq').value = 1000;
+
+                // Unison sliders
+                document.getElementById('unisonCount').value = 8;
+                document.getElementById('unisonDisplay').textContent = 8;
+                document.getElementById('unisonSpread').value = 2; // 2%
+                document.getElementById('spreadDisplay').textContent = '2%';
+
+                // Effect mix slider
+                document.getElementById('effectMix').value = 50;
+                document.getElementById('mixDisplay').textContent = '50%';
+
+                // Effect toggle buttons (set to inactive)
+                document.querySelectorAll('.effect-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+
+                // Recording/Playback buttons
+                this.recordToggleBtn.textContent = '● Record';
+                this.recordToggleBtn.classList.remove('recording', 'has-recording');
+                this.recordToggleBtn.setAttribute('aria-pressed', 'false');
+                this.playbackToggleBtn.textContent = '▶ Play';
+                this.playbackToggleBtn.classList.remove('playing');
+                this.playbackToggleBtn.setAttribute('aria-pressed', 'false');
+                this.loopToggleBtn.classList.remove('active');
+                this.loopToggleBtn.textContent = '🔄 Loop';
+                this.loopToggleBtn.setAttribute('aria-pressed', 'false');
+                
+                // Start/Stop button
+                this.startStopBtn.textContent = 'Start Audio';
+                this.startStopBtn.classList.remove('active');
+                this.startStopBtn.setAttribute('aria-pressed', 'false');
+
+                // Clear displays
+                this.currentFreq = 0;
+                this.currentVolume = 0;
+                this.pressureMultiplier = 1;
+                this._updateDisplayInternal(); // Force update
+            }
+
+            /**
+             * Shows a welcome message on the first visit.
+             */
+            showWelcomeMessage() {
+                const hasVisited = localStorage.getItem('hasVisited');
+                if (!hasVisited) {
+                    showMessageBox('Welcome to ThereThere! Click "Start Audio" to begin. Touch the main area to play. Explore effects and recording!');
+                    localStorage.setItem('hasVisited', 'true');
+                }
+            }
+
+            /**
+             * Updates the audio status display based on the AudioContext state.
+             */
+            updateAudioStatus() {
+                const statusDiv = this.audioStatusDiv;
+                if (!this.audioContext) {
+                    statusDiv.textContent = 'Audio Inactive';
+                    statusDiv.className = 'status-inactive';
+                } else {
+                    statusDiv.textContent = `Audio ${this.audioContext.state.charAt(0).toUpperCase() + this.audioContext.state.slice(1)}`;
+                    statusDiv.className = `status-${this.audioContext.state}`;
+                }
+            }
+
+            /**
+             * Sets the waveform type for all active and future oscillators.
+             * @param {string} buttonId The ID of the clicked waveform button.
+             */
+            setWaveType(buttonId) {
+                // Ensure the element exists before trying to modify its classList
+                const targetButton = document.getElementById(buttonId);
+                if (!targetButton) {
+                    console.warn(`Wave button with ID "${buttonId}" not found.`);
+                    return;
+                }
+
+                document.querySelectorAll('.wave-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                targetButton.classList.add('active');
+                targetButton.setAttribute('aria-pressed', 'true');
+                
+                let newWaveType;
+                switch(buttonId) {
+                    case 'sineWave': newWaveType = 'sine'; break;
+                    case 'squareWave': newWaveType = 'square'; break;
+                    case 'sawWave': newWaveType = 'sawtooth'; break;
+                    case 'triangleWave': newWaveType = 'triangle'; break;
+                    default: newWaveType = 'sine';
+                }
+                this.currentWaveType = newWaveType;
+
+                // Update type for all currently active voices
+                this.voiceManager?.activeVoices.forEach(voice => {
+                    if (voice.oscillator) {
+                        voice.oscillator.type = this.currentWaveType;
+                    }
+                });
+            }
+
+            /**
+             * Stops the audio sound by fading out all active voices.
+             * This only affects live input voices if playback is active.
+             * @param {number} fadeOutTime Optional: duration of fade out in seconds. Default is 0.1s.
+             */
+            stopSound(fadeOutTime = 0.1) {
+                // Check if there are actually any live voices playing before setting isPlaying to false
+                const hasLiveVoices = Array.from(this.voiceManager?.activeVoices.values() || []).some(v => v.isLive);
+                if (!this.isPlaying && !hasLiveVoices) return;
+
+                this.voiceManager?.activeVoices.forEach((voice, id) => {
+                    if (voice.isLive) { // Only stop live voices here
+                        this.voiceManager.releaseVoice(id);
+                    }
+                });
+                
+                // Only set isPlaying to false if no live voices AND no playback is active
+                if (!hasLiveVoices && !this.playbackManager?.isPlayingBack) {
+                    this.isPlaying = false;
+                    this.touchIndicator.style.opacity = '0';
+                    this.currentFreq = 0;
+                    this.currentVolume = 0;
+                    this.pressureMultiplier = 1;
+                    this.touchIndicator.style.background = 'radial-gradient(circle, var(--touch-indicator-color-base) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)';
+                }
+                this._displayUpdateThrottle(); 
+            }
+
+            /**
+             * Detects specific vertical gestures (now triggering Echo or Reverb) based on touch history.
+             */
+            detectGestures() {
+                if (this.touchHistory.length < 3) return;
+                
+                const recent = this.touchHistory.slice(-3);
+                const totalYChange = recent[recent.length - 1].y - recent[0].y;
+                const timeSpan = recent[recent.length - 1].time - recent[0].time;
+                
+                if (timeSpan === 0) return;
+                const velocity = Math.abs(totalYChange / timeSpan);
+
+                const velocityThreshold = 0.5; 
+                const distanceThreshold = 50; 
+                
+                // Check if Echo is enabled and gesture matches
+                const echoEffect = this.audioEffectsManager?.getEffect('Echo');
+                if (echoEffect?.isEnabled && totalYChange > distanceThreshold && velocity > velocityThreshold) {
+                    this.triggerEchoEffect();
+                }
+                
+                // Check if Reverb is enabled and gesture matches
+                const reverbEffect = this.audioEffectsManager?.getEffect('Reverb');
+                if (reverbEffect?.isEnabled && totalYChange < -distanceThreshold && velocity > velocityThreshold) {
+                    this.triggerReverbEffect();
+                }
+            }
+
+            /**
+             * Triggers the "Echo" effect (formerly dripping).
+             */
+            triggerEchoEffect() {
+                const echoEffect = this.audioEffectsManager?.getEffect('Echo');
+                if (!this.audioContext || !echoEffect || !echoEffect.isEnabled) return;
+                
+                // Temporarily activate visual feedback for the gesture
+                this.touchIndicator.style.transition = 'background 0.1s ease, box-shadow 0.1s ease';
+                this.touchIndicator.style.background = 'radial-gradient(circle, var(--touch-indicator-color-echo) 0%, rgba(100, 200, 255, 0.4) 70%, transparent 100%)';
+                this.touchIndicator.style.boxShadow = `0 0 40px var(--touch-indicator-glow-echo)`;
+
+                // Example: briefly modify echo parameters
+                const originalDelayTime = echoEffect.delayTime;
+                const originalFeedback = echoEffect.feedback;
+                const now = this.audioContext.currentTime;
+
+                echoEffect.delayNode.delayTime.cancelScheduledValues(now);
+                echoEffect.feedbackGain.gain.cancelScheduledValues(now);
+
+                echoEffect.setDelayTime(0.6); // Longer delay for gesture
+                echoEffect.setFeedback(0.8); // More feedback for gesture
+
+                setTimeout(() => {
+                    echoEffect.setDelayTime(originalDelayTime); // Restore
+                    echoEffect.setFeedback(originalFeedback); // Restore
+                    this.touchIndicator.style.background = 'radial-gradient(circle, var(--touch-indicator-color-base) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)';
+                    this.touchIndicator.style.boxShadow = `0 0 30px var(--touch-indicator-glow-base)`;
+                }, 800);
+            }
+
+            /**
+             * Triggers the "Reverb" effect (formerly lifting).
+             */
+            triggerReverbEffect() {
+                const reverbEffect = this.audioEffectsManager?.getEffect('Reverb');
+                if (!this.audioContext || !reverbEffect || !reverbEffect.isEnabled) return;
+                
+                // Temporarily activate visual feedback for the gesture
+                this.touchIndicator.style.transition = 'background 0.1s ease, box-shadow 0.1s ease';
+                this.touchIndicator.style.background = 'radial-gradient(circle, var(--touch-indicator-color-reverb) 0%, rgba(255, 200, 100, 0.4) 70%, transparent 100%)';
+                this.touchIndicator.style.boxShadow = `0 0 40px var(--touch-indicator-glow-reverb)`;
+
+                // Example: briefly modify reverb parameters or apply a temporary pitch bend
+                // For a reverb gesture, we could briefly increase decay or add a temporary pitch shift to voices
+                const originalDecay = reverbEffect.decay;
+                reverbEffect.setDecay(originalDecay * 1.5); // Temporarily longer decay
+
+                // Apply pitch bend to all active voices (as in original lifting effect)
+                const now = this.audioContext.currentTime;
+                this.voiceManager?.activeVoices.forEach((voice) => {
+                    if (voice.oscillator) {
+                        const currentFreq = voice.oscillator.frequency.value;
+                        voice.oscillator.frequency.cancelScheduledValues(now);
+                        voice.oscillator.frequency.setTargetAtTime(currentFreq * 1.5, now, 0.1);
+                        voice.oscillator.frequency.setTargetAtTime(currentFreq, now + 0.6, 0.1);
+                    }
+                });
+
+                setTimeout(() => {
+                    reverbEffect.setDecay(originalDecay); // Restore
+                    this.touchIndicator.style.background = 'radial-gradient(circle, var(--touch-indicator-color-base) 0%, rgba(255, 255, 255, 0.2) 70%, transparent 100%)';
+                    this.touchIndicator.style.boxShadow = `0 0 30px var(--touch-indicator-glow-base)`;
+                }, 1500);
+            }
+
+            /**
+             * Updates the text content of the frequency, volume, pressure, and effect displays.
+             * This is the internal, unthrottled version.
+             */
+            _updateDisplayInternal() {
+                this.freqDisplay.textContent = `Frequency: ${Math.round(this.currentFreq)} Hz`;
+                this.volumeDisplay.textContent = `Volume: ${Math.round(this.currentVolume * 100)}%`;
+                this.pressureDisplay.textContent = `Pressure: ${this.pressureMultiplier.toFixed(1)}`;
+                this.activeUnisonDisplay.textContent = `Voices: ${this.multiTouchManager?.activeTouches.size || 0}`; // Display actual active touch count
+                
+                // Display active effects from the AudioEffectsManager
+                let activeEffectsNames = [];
+                if (this.audioEffectsManager) {
+                    activeEffectsNames = this.audioEffectsManager.effectChain.map(e => e.name);
+                }
+                this.effectDisplay.textContent = `Effect: ${activeEffectsNames.length > 0 ? activeEffectsNames.join(', ') : 'None'}`;
+
+                // Access recording state from playbackManager
+                if (this.playbackManager?.isRecording) {
+                    this.recordDisplay.textContent = `Recording: ON`;
+                    this.recordDisplay.style.color = '#F44336';
+                } else if (this.playbackManager?.isPlayingBack) {
+                    this.recordDisplay.textContent = `Recording: Playback`;
+                    this.recordDisplay.style.color = '#2196F3';
+                } else if (this.playbackManager?.currentRecording.length > 0) {
+                    this.recordDisplay.textContent = `Recording: Ready (${this.playbackManager.currentRecording.length} pts)`;
+                    this.recordDisplay.style.color = '#8BC34A';
+                } else {
+                    this.recordDisplay.textContent = `Recording: Off`;
+                    this.recordDisplay.style.color = 'white';
+                }
+
+                this.updateAudioStatus(); // Also update audio status
+            }
+
+            setupWaveform() {
+                // This function currently only prepares the canvas.
+                // More complex waveform generation logic (e.g., using AnalyserNode) would go here.
+            }
+
+            setupCanvas() {
+                this.canvas = document.getElementById('waveCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                const resizeCanvas = () => {
+                    this.canvas.width = this.canvas.offsetWidth;
+                    this.canvas.height = this.canvas.offsetHeight;
+                };
+                
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+                
+                this.animateWave();
+            }
+
+            animateWave() {
+                const draw = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    // Only draw wave if sound is playing (live or playback)
+                    if (this.isPlaying && this.currentFreq > 0 && (this.voiceManager?.activeVoices.size || 0) > 0) {
+                        const amplitude = this.currentVolume * (this.canvas.height / 4);
+                        const time = Date.now() * 0.005;
+                        const voiceCount = Math.ceil(this.pressureMultiplier); // Use pressure as visual voice count
+                        
+                        this.ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0.3, this.currentVolume + 0.1)})`;
+                        this.ctx.lineWidth = 1 + voiceCount * 0.5;
+                        this.ctx.beginPath();
+                        
+                        for (let x = 0; x < this.canvas.width; x++) {
+                            let y = this.canvas.height / 2;
+                            
+                            // Simulate multiple voices for visualization
+                            for (let v = 0; v < voiceCount; v++) {
+                                // Use UnisonProcessor for visualization too
+                                const simulatedVoiceParams = this.unisonProcessor.calculateVoiceParameters(
+                                    this.currentFreq, 
+                                    v, 
+                                    voiceCount, 
+                                    this.unisonSpread * 10, 
+                                    'centered' // Use centered spread for visualization
+                                );
+                                const freq = simulatedVoiceParams.frequency / 100;
+                                let voiceAmplitude = amplitude / voiceCount;
+                                
+                                // Visual feedback for active Echo/Reverb effects
+                                const activeEffects = this.audioEffectsManager?.effectChain.map(e => e.name) || [];
+                                if (activeEffects.includes('Echo')) {
+                                    voiceAmplitude *= (1 + Math.sin(time * 0.1 + x * 0.05) * 0.5);
+                                } else if (activeEffects.includes('Reverb')) {
+                                    voiceAmplitude *= (1 + Math.cos(time * 0.08 + x * 0.04) * 0.6);
+                                }
+                                
+                                y += Math.sin((x * freq * 0.01 + time + (simulatedVoiceParams.phase / 360) * Math.PI * 2)) * voiceAmplitude;
+                            }
+                            
+                            if (x === 0) {
+                                this.ctx.moveTo(x, y);
+                            } else {
+                                this.ctx.lineTo(x, y);
+                            }
+                        }
+                        
+                        this.ctx.stroke();
+                        
+                        // Draw secondary lines for active Echo/Reverb for visual emphasis
+                        const activeEffects = this.audioEffectsManager?.effectChain.map(e => e.name) || [];
+                        if (activeEffects.includes('Echo')) {
+                            this.ctx.strokeStyle = `rgba(100, 200, 255, ${this.currentVolume * 0.8})`;
+                            this.ctx.lineWidth = 2;
+                            this.ctx.stroke();
+                        } else if (activeEffects.includes('Reverb')) {
+                            this.ctx.strokeStyle = `rgba(255, 200, 100, ${this.currentVolume * 0.8})`;
+                            this.ctx.lineWidth = 2;
+                            this.ctx.stroke();
+                        }
+                    }
+                    
+                    requestAnimationFrame(draw);
+                };
+                
+                draw();
+            }
+
+            /**
+             * Adds a point to the visualization path.
+             * @param {number} x X coordinate relative to theremin area.
+             * @param {number} y Y coordinate relative to theremin area.
+             * @param {number} volume Volume at this point (for color/opacity).
+             */
+            addPathPoint(x, y, volume) {
+                this.pathPoints.push({
+                    x: x,
+                    y: y,
+                    volume: volume
+                });
+                
+                if (this.pathPoints.length > this.maxPathPoints) {
+                    this.pathPoints.shift();
+                }
+            }
+
+            /**
+             * Draws the recorded path on the SVG element.
+             */
+            updatePathVisualization() {
+                if (this.pathPoints.length === 0) {
+                    this.clearPathVisualization();
+                    return;
+                }
+
+                const pathData = this.pathPoints.map((p, i) => {
+                    const command = i === 0 ? 'M' : 'L';
+                    return `${command} ${p.x},${p.y}`;
+                }).join(' ');
+
+                let pathElement = this.melodyPathSvg.querySelector('path');
+                if (!pathElement) {
+                    pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    this.melodyPathSvg.appendChild(pathElement);
+                }
+
+                pathElement.setAttribute('d', pathData);
+                pathElement.setAttribute('fill', 'none');
+                pathElement.setAttribute('stroke', 'rgba(255, 255, 255, 0.7)');
+                pathElement.setAttribute('stroke-width', '2');
+                pathElement.setAttribute('stroke-linecap', 'round');
+                pathElement.setAttribute('stroke-linejoin', 'round');
+            }
+
+            /**
+             * Clears the SVG path visualization.
+             */
+            clearPathVisualization() {
+                const pathElement = this.melodyPathSvg.querySelector('path');
+                if (pathElement) {
+                    this.melodyPathSvg.removeChild(pathElement);
+                }
+                this.pathPoints = [];
+            }
+
+            /**
+             * Dynamically updates the effect parameter UI based on active effects.
+             */
+            updateEffectUI() {
+                this.effectControlsPanel.innerHTML = '<div class="list-header">Effect Parameters:</div>';
+                if (!this.audioEffectsManager) return;
+
+                const allEffectButtons = document.querySelectorAll('.effect-btn');
+                allEffectButtons.forEach(btn => btn.classList.remove('active'));
+
+                this.audioEffectsManager.effects.forEach(effect => {
+                    // Update the active state of the main effect toggle button
+                    const effectButton = document.getElementById(`${effect.name.toLowerCase()}Toggle`);
+                    if (effectButton) {
+                        effectButton.classList.toggle('active', effect.isEnabled);
+                        effectButton.setAttribute('aria-pressed', effect.isEnabled);
+                    }
+
+                    if (effect.isEnabled) {
+                        const effectDiv = document.createElement('div');
+                        effectDiv.classList.add('effect-group');
+                        effectDiv.innerHTML = `<strong>${effect.name}</strong>`;
+                        this.effectControlsPanel.appendChild(effectDiv);
+
+                        // Add common mix control
+                        this._createSliderControl(
+                            effectDiv,
+                            `${effect.name}Mix`,
+                            'Mix',
+                            0, 100, effect.mix * 100, 1,
+                            (value) => {
+                                effect.setMix(value / 100);
+                                this._displayUpdateThrottle();
+                            },
+                            '%'
+                        );
+
+                        // Add specific parameters for each effect
+                        switch (effect.name) {
+                            case 'Echo':
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}DelayTime`,
+                                    'Time',
+                                    10, 1000, effect.delayTime * 1000, 10,
+                                    (value) => {
+                                        effect.setDelayTime(value / 1000);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    'ms'
+                                );
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}Feedback`,
+                                    'Feedback',
+                                    0, 99, effect.feedback * 100, 1,
+                                    (value) => {
+                                        effect.setFeedback(value / 100);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    '%'
+                                );
+                                break;
+                            case 'Reverb':
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}Decay`,
+                                    'Decay',
+                                    1, 100, effect.decay * 10, 1, // Scale for UI (0.1s to 10s)
+                                    (value) => {
+                                        effect.setDecay(value / 10);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    's'
+                                );
+                                break;
+                            case 'Chorus':
+                            case 'Flanger':
+                            case 'Phaser':
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}Rate`,
+                                    'LFO Rate',
+                                    1, 100, effect.rate * 10, 1, // Scale for UI (0.1Hz to 10Hz)
+                                    (value) => {
+                                        effect.setRate(value / 10);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    'Hz'
+                                );
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}Depth`,
+                                    'LFO Depth',
+                                    0, 100, effect.depth * 10000, 1, // Scale for UI
+                                    (value) => {
+                                        effect.setDepth(value / 10000);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    '' // Unit depends on effect
+                                );
+                                if (effect.name === 'Flanger' || effect.name === 'Phaser') {
+                                    this._createSliderControl(
+                                        effectDiv,
+                                        `${effect.name}Feedback`,
+                                        'Feedback',
+                                        0, 99, effect.feedback * 100, 1,
+                                        (value) => {
+                                            effect.setFeedback(value / 100);
+                                            this._displayUpdateThrottle();
+                                        },
+                                        '%'
+                                    );
+                                }
+                                break;
+                            case 'Distortion':
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}Amount`,
+                                    'Amount',
+                                    0, 100, effect.amount * 100, 1,
+                                    (value) => {
+                                        effect.setAmount(value / 100);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    '%'
+                                );
+                                break;
+                            case 'BitCrusher':
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}BitDepth`,
+                                    'Bit Depth',
+                                    1, 16, effect.bitDepth, 1,
+                                    (value) => {
+                                        effect.setBitDepth(value);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    'bits'
+                                );
+                                this._createSliderControl(
+                                    effectDiv,
+                                    `${effect.name}SampleRateReduction`,
+                                    'SR Reduce',
+                                    1, 16, effect.sampleRateReduction, 1,
+                                    (value) => {
+                                        effect.setSampleRateReduction(value);
+                                        this._displayUpdateThrottle();
+                                    },
+                                    'x'
+                                );
+                                break;
+                        }
+                    }
+                });
+            }
+
+            /**
+             * Helper to create a slider control for effect parameters.
+             * @param {HTMLElement} parentDiv The div to append the control to.
+             * @param {string} id The ID for the input element.
+             * @param {string} labelText The label for the control.
+             * @param {number} min Min value of the slider.
+             * @param {number} max Max value of the slider.
+             * @param {number} value Current value of the slider.
+             * @param {number} step Step value of the slider.
+             * @param {Function} onChange Callback function for input event.
+             * @param {string} unit Display unit for the value.
+             */
+            _createSliderControl(parentDiv, id, labelText, min, max, value, step, onChange, unit = '') {
+                const group = document.createElement('div');
+                group.classList.add('effect-param-group');
+
+                const label = document.createElement('label');
+                label.setAttribute('for', id);
+                label.textContent = labelText + ':';
+                group.appendChild(label);
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.id = id;
+                slider.min = min;
+                slider.max = max;
+                slider.value = value;
+                slider.step = step;
+                slider.setAttribute('aria-label', `${labelText} for ${id}`);
+                group.appendChild(slider);
+
+                const valueDisplay = document.createElement('span');
+                valueDisplay.textContent = `${value}${unit}`;
+                group.appendChild(valueDisplay);
+
+                slider.addEventListener('input', (e) => {
+                    valueDisplay.textContent = `${e.target.value}${unit}`;
+                    onChange(parseFloat(e.target.value));
+                });
+
+                parentDiv.appendChild(group);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            new EnhancedTouchTheremin();
+        });
+
+        // Prevent default touch actions (scrolling, zooming) on the theremin area
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.theremin-area')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.theremin-area')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
